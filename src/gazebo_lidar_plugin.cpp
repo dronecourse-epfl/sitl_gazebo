@@ -29,6 +29,8 @@
 #include "gazebo/transport/transport.hh"
 #include "gazebo/msgs/msgs.hh"
 
+#include "common.h"
+
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -98,13 +100,24 @@ void RayPlugin::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf)
   node_handle_ = transport::NodePtr(new transport::Node());
   node_handle_->Init(namespace_);
 
+  // find topic name; if not found in sdf, look for subTopic, if not found either, use default
+  string topicName;
+  if(_sdf->HasElement("topic"))
+  {
+    topicName = _sdf->Get<string>("topic");
+  }
+  else
+  {
 #if GAZEBO_MAJOR_VERSION >= 7
-  const string scopedName = _parent->ParentName();
+    const string scopedName = _parent->ParentName();
 #else
-  const string scopedName = _parent->GetParentName();
+    const string scopedName = _parent->GetParentName();
 #endif
-  string topicName = "~/" + scopedName + "/lidar";
-  boost::replace_all(topicName, "::", "/");
+    string subTopicName;
+    getSdfParam<std::string>(_sdf, "lidarSubTopic", subTopicName, "/lidar");
+    topicName = "~/" + scopedName + subTopicName;
+    boost::replace_all(topicName, "::", "/");
+  }
 
   lidar_pub_ = node_handle_->Advertise<lidar_msgs::msgs::lidar>(topicName, 10);
 
