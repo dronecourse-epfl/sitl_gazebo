@@ -107,6 +107,17 @@ void RayPlugin::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf)
   boost::replace_all(topicName, "::", "/");
 
   lidar_pub_ = node_handle_->Advertise<lidar_msgs::msgs::lidar>(topicName, 10);
+
+  // set sensor id if available
+  if(_sdf->HasElement("id"))
+  {
+    lidar_message.set_id(_sdf->Get<uint32_t>("id"));
+  }
+  // set sensor orientation if available
+  if(_sdf->HasElement("orientation"))
+  {
+    lidar_message.set_orientation(_sdf->Get<uint32_t>("orientation"));
+  }
 }
 
 /////////////////////////////////////////////////
