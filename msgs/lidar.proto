@@ -6,5 +6,7 @@ message lidar
   required float time_msec       	= 1;
   required float min_distance      	= 2;
   required float max_distance  	 	= 3;
-  required float current_distance     	= 4;
+  required float current_distance  	= 4;
+  optional uint32 id 				= 5;
+  optional uint32 orientation 		= 6;
 }
