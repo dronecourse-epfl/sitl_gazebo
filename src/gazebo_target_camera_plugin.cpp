@@ -24,14 +24,17 @@ TargetCameraPlugin::TargetCameraPlugin() :
 {
   vfov2_ = hfov2_*image_height2_/((float)image_width2_);
   focal_length_ = image_width2_ / tan(hfov2_);
+  period_s_ = 1.0f / UPDATE_RATE_DEFAULT_;
 }
 
 
 void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 {
-  physics::WorldPtr world = _model->GetWorld();
+  world_ = _model->GetWorld();
 
+  // -----------------------
   // find camera parameters
+  // -----------------------
   const sensors::CameraSensorPtr camera_sensor = FindCameraSensor(_model);
   if(camera_sensor != NULL)
   {
@@ -41,16 +44,21 @@ void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     image_width2_ = camera->ImageWidth()/2.0f;
     image_height2_ = camera->ImageHeight()/2.0f;
     focal_length_ = image_width2_ / tan(hfov2_);
+    period_s_ = 1.0f / camera_sensor->UpdateRate();
+    // add callback to camera
+    newFrameConnection_ = camera->ConnectNewImageFrame(boost::bind(&TargetCameraPlugin::OnNewFrame, this));
   }
   else
   {
     camera_link_ = _model;
     std::cout << "TargetCameraPlugin::Load(..) could not find camera sensor! Using default values;" << std::endl;
     std::cout << "   using model (" << _model->GetName() << ") for camera pose" << std::endl;
+    // add callback for world update
+    updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&TargetCameraPlugin::OnUpdate, this, _1));
   }
 
 
-  // // TODO create model list from attributes
+  // TODO create model list from attributes
   std::vector<std::string> model_names;
   model_names.push_back("truck");
 
@@ -62,30 +70,45 @@ void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   std::vector<std::string>::const_iterator it;
   for(it = model_names.begin(); it != model_names.end(); it++)
   {
-    physics::ModelPtr model = world->GetModel(*it);
+    physics::ModelPtr model = world_->GetModel(*it);
     if(model)
     {
       message_map_[model].set_target_num(target_num++);
+      message_map_[model].set_frame(0);
       std::cout << "###################### !!!!!!!!!!!!!!!! added model: " << *it << std::endl;
     }
   }
 
   // connection to publish pose over google proto buf
   node_handle_ = transport::NodePtr(new transport::Node());
-  node_handle_->Init(namespace_);
+  node_handle_->Init();
 
-  std::string topicName = "~/" + _model->GetName() + "/Position";
+  std::string topicName = "~/" + _model->GetName() + "/LandingTarget";
   landing_target_pub_ = node_handle_->Advertise<target_camera::msgs::LandingTarget>(topicName, 10);
-  updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&TargetCameraPlugin::OnUpdate, this, _1));
 }
 
 
-/////////////////////////////////////////////////
-void TargetCameraPlugin::OnUpdate(const common::UpdateInfo& /*_info*/)
+void TargetCameraPlugin::OnUpdate(const common::UpdateInfo& info)
 {
-  
-  const math::Pose& camera_pose = camera_link_->GetWorldPose();
+  // Get Delta T
+  common::Time current_time = info.simTime;
+  double dt = (current_time - last_time_).Double();
 
+  if(dt > period_s_)
+  {
+    OnNewFrame();
+    last_time_ = current_time;
+  }
+}
+
+
+
+void TargetCameraPlugin::OnNewFrame()
+{
+  const math::Pose& camera_pose = camera_link_->GetWorldPose();
+  uint64_t timestamp_us = (uint64_t)(world_->GetSimTime().Double()*1e6);
+
+  // iterate over all targets
   std::map<physics::ModelPtr, TargetMsg>::iterator msg_it; 
   for(msg_it = message_map_.begin(); msg_it != message_map_.end(); msg_it++)
   {
@@ -94,24 +117,20 @@ void TargetCameraPlugin::OnUpdate(const common::UpdateInfo& /*_info*/)
     // Get bearing of target in camera frame
     const math::Pose& target_pose = msg_it->first->GetWorldPose();
     math::Pose rel_pose = target_pose - camera_pose;
-    float angle_x = atan2(rel_pose.pos.x, -rel_pose.pos.z);
-    float angle_y = atan2(rel_pose.pos.y, -rel_pose.pos.z);
 
-static int i = 0;
-    
-    if(angle_x >= -hfov2_ && angle_x <= hfov2_ && angle_y >= -vfov2_ && angle_y <= vfov2_)
+    float pixel_x = round((focal_length_ * rel_pose.pos.y/rel_pose.pos.z) + image_width2_); // column
+    float pixel_y = round((focal_length_ * rel_pose.pos.x/rel_pose.pos.z) + image_height2_); // row
+
+    if(pixel_x >= 0 && pixel_x < 2*image_width2_ && pixel_y >= 0 && pixel_y < 2*image_height2_)
     {
-      float pixel_x = round(focal_length_ * rel_pose.pos.x/(-rel_pose.pos.z));
-      float pixel_y = round(focal_length_ * rel_pose.pos.y/(-rel_pose.pos.z));
-
-
-
-      if(i++ % 500)
-      {
-        std::cout << " YEES : angular [deg] ( " << angle_x << " | " << angle_y << " )    pixels: ( " << pixel_x << " | " << pixel_y << " ) " << std::endl;
-      }
-
-      // landing_target_pub_->Publish(msg);
+      msg.set_time_usec(timestamp_us);
+      msg.set_angle_x(pixel_x);
+      msg.set_angle_y(pixel_y);
+      msg.set_distance(abs(rel_pose.pos.z));
+      msg.set_size_x(2*image_width2_);
+      msg.set_size_y(2*image_height2_);
+      std::cout << "  pixels: ( " << pixel_x << " | " << pixel_y << " )    timestamp_us " << timestamp_us << std::endl;
+      landing_target_pub_->Publish(msg);
     }
   }
 }

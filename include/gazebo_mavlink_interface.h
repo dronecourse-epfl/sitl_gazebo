@@ -35,6 +35,8 @@
 #include "SensorImu.pb.h"
 #include "opticalFlow.pb.h"
 #include "lidar.pb.h"
+#include "LandingTarget.pb.h"
+
 #include <boost/bind.hpp>
 
 #include <iostream>
@@ -59,6 +61,7 @@ namespace gazebo {
 typedef const boost::shared_ptr<const mav_msgs::msgs::CommandMotorSpeed> CommandMotorSpeedPtr;
 typedef const boost::shared_ptr<const sensor_msgs::msgs::Imu> ImuPtr;
 typedef const boost::shared_ptr<const lidar_msgs::msgs::lidar> LidarPtr;
+typedef const boost::shared_ptr<const target_camera::msgs::LandingTarget> LandingTargetPtr;
 typedef const boost::shared_ptr<const opticalFlow_msgs::msgs::opticalFlow> OpticalFlowPtr;
 
 // Default values
@@ -71,7 +74,7 @@ static const std::string kDefaultMotorVelocityReferencePubTopic = "/gazebo/comma
 static const std::string kDefaultImuTopic = "/imu";
 static const std::string kDefaultLidarTopic = "/lidar/link/lidar";
 static const std::string kDefaultOpticalFlowTopic = "/camera/link/opticalFlow";
-
+static const std::string kDefaultLandingTargetTopic = "/LandingTarget";
 class GazeboMavlinkInterface : public ModelPlugin {
  public:
   GazeboMavlinkInterface()
@@ -83,6 +86,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
         imu_sub_topic_(kDefaultImuTopic),
         opticalFlow_sub_topic_(kDefaultOpticalFlowTopic),
         lidar_sub_topic_(kDefaultLidarTopic),
+        landingTarget_sub_topic_(kDefaultLandingTargetTopic),
         model_{},
         world_(nullptr),
         left_elevon_joint_(nullptr),
@@ -151,6 +155,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
   void QueueThread();
   void ImuCallback(ImuPtr& imu_msg);
   void LidarCallback(LidarPtr& lidar_msg);
+  void LandingTargetCallback(LandingTargetPtr& pose_message);
   void OpticalFlowCallback(OpticalFlowPtr& opticalFlow_msg);
   void send_mavlink_message(const uint8_t msgid, const void *msg, uint8_t component_ID);
   void handle_message(mavlink_message_t *msg);
@@ -171,11 +176,12 @@ class GazeboMavlinkInterface : public ModelPlugin {
 
   transport::SubscriberPtr imu_sub_;
   transport::SubscriberPtr lidar_sub_;
+  transport::SubscriberPtr landingTarget_sub_;
   transport::SubscriberPtr opticalFlow_sub_;
   std::string imu_sub_topic_;
   std::string lidar_sub_topic_;
   std::string opticalFlow_sub_topic_;
-  
+  std::string landingTarget_sub_topic_;
   common::Time last_time_;
   common::Time last_gps_time_;
   common::Time last_actuator_time_;
