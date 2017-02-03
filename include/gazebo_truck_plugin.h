@@ -21,12 +21,19 @@ class GazeboTruckPlugin : public ModelPlugin {
   physics::WorldPtr world_;
   common::Time last_time_;
 
-  float alpha_;             // trajectory parameter
 
-  float length_ = 10.0f; // half the straight segment of the trajectory
-  float radius_ = 10.0f;
+  float length_ = 120.0f; // half the straight segment of the trajectory
+  float radius_ = 20.0f;
 
+  int state_;            // state of state machine
+  float alpha_;
   // Pointer to the update event connection
-  private: event::ConnectionPtr updateConnection_;
+  private:
+    // std::string namespace_;
+    event::ConnectionPtr updateConnection_;
+    // transport::PublisherPtr pose_pub_;
+    // transport::NodePtr node_handle_;
+
+    // vehicle_state_msgs::msgs::Pose pose_message_;
 };
 }
