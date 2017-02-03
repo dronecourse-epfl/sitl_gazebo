@@ -24,7 +24,7 @@
         <material>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
+            <name>Gazebo/Black</name>
           </script>
         </material>
       </visual>
@@ -61,7 +61,7 @@
         <material>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
+            <name>Gazebo/Black</name>
           </script>
         </material>
       </visual>
@@ -98,7 +98,7 @@
           <lighting>1</lighting>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
+            <name>Gazebo/Black</name>
           </script>
         </material>
       </visual>
@@ -135,7 +135,7 @@
           <lighting>1</lighting>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
+            <name>Gazebo/Black</name>
           </script>
         </material>
       </visual>
@@ -171,7 +171,7 @@
         <material>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
+            <name>Gazebo/Blue</name>
           </script>
         </material>
       </visual>
@@ -205,8 +205,9 @@
         <material>
           <lighting>1</lighting>
           <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
+            <uri>model://truck/materials/scripts</uri>
+            <uri>model://truck/materials/textures</uri>
+            <name>truck/platform</name>
           </script>
         </material>
       </visual>
@@ -243,7 +244,7 @@
       <child>cab</child>
       <pose frame=''>0 0 0 0 -0 0</pose>
     </joint>
-    <static>1</static>
+    <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
     <plugin name='TruckControl' filename='libgazebo_truck_plugin.so'>
     </plugin>
