@@ -161,6 +161,7 @@ set (msgs
   msgs/lidar.proto
   msgs/CommandMotorSpeed.proto
   msgs/MotorSpeed.proto
+  msgs/LandingTarget.proto
 )
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
 add_library(mav_msgs SHARED ${PROTO_SRCS})
@@ -185,6 +186,7 @@ add_library(rotors_gazebo_imu_plugin SHARED src/gazebo_imu_plugin.cpp)
 add_library(gazebo_opticalFlow_plugin SHARED src/flow_settings.c src/flow.c
   src/gazebo_opticalFlow_plugin.cpp)
 add_library(gazebo_lidar_plugin SHARED src/gazebo_lidar_plugin.cpp)
+add_library(gazebo_target_camera_plugin SHARED src/gazebo_target_camera_plugin.cpp)
 add_library(rotors_gazebo_mavlink_interface SHARED src/gazebo_mavlink_interface.cpp src/geo_mag_declination.cpp)
 add_library(gazebo_truck_plugin SHARED src/gazebo_truck_plugin.cpp)
 
@@ -195,6 +197,7 @@ set(plugins
   rotors_gazebo_imu_plugin
   gazebo_opticalFlow_plugin
   gazebo_lidar_plugin
+  gazebo_target_camera_plugin
   rotors_gazebo_mavlink_interface
   gazebo_truck_plugin
   )
