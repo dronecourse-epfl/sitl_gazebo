@@ -183,6 +183,7 @@ set (msgs
   msgs/MotorSpeed.proto
   #msgs/Wind.proto
   msgs/sonarSens.proto
+  msgs/LandingTarget.proto
 )
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
 add_library(mav_msgs SHARED ${PROTO_SRCS})
@@ -207,14 +208,12 @@ add_library(rotors_gazebo_imu_plugin SHARED src/gazebo_imu_plugin.cpp)
 add_library(gazebo_opticalFlow_plugin SHARED src/gazebo_opticalFlow_plugin.cpp)
 target_link_libraries(gazebo_opticalFlow_plugin ${OpticalFlow_LIBS})
 add_library(gazebo_lidar_plugin SHARED src/gazebo_lidar_plugin.cpp)
+add_library(gazebo_target_camera_plugin SHARED src/gazebo_target_camera_plugin.cpp)
 add_library(rotors_gazebo_mavlink_interface SHARED src/gazebo_mavlink_interface.cpp src/geo_mag_declination.cpp)
-<<<<<<< HEAD
 #add_library(rotors_gazebo_wind_plugin SHARED src/gazebo_wind_plugin.cpp)
 add_library(gazebo_sonar_plugin SHARED src/gazebo_sonar_plugin.cpp)
 add_library(gazebo_uuv_plugin SHARED src/gazebo_uuv_plugin.cpp)
-=======
 add_library(gazebo_truck_plugin SHARED src/gazebo_truck_plugin.cpp)
->>>>>>> Added Truck: added model and plugin for the truck
 
 set(plugins
   rotors_gazebo_controller_interface
@@ -223,6 +222,7 @@ set(plugins
   rotors_gazebo_imu_plugin
   gazebo_opticalFlow_plugin
   gazebo_lidar_plugin
+  gazebo_target_camera_plugin
   rotors_gazebo_mavlink_interface
   #rotors_gazebo_wind_plugin
   gazebo_sonar_plugin
