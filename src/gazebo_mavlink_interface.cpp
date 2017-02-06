@@ -829,8 +829,6 @@ void GazeboMavlinkInterface::LandingTargetCallback(LandingTargetPtr& landingTarg
   target_msg.size_x = landingTarget_msg->size_x();
   target_msg.size_y = landingTarget_msg->size_y();
 
-  std::cout << "Landing Target: (" << target_msg.angle_x << " | " << target_msg.angle_y << ")  target_num: " << (int)target_msg.target_num << "    timestamp: " << target_msg.time_usec << std::endl;
-
   send_mavlink_message(MAVLINK_MSG_ID_LANDING_TARGET, &target_msg, 200);
 }
 

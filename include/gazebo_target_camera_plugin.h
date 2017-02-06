@@ -19,6 +19,9 @@ namespace gazebo
     const static float UPDATE_RATE_DEFAULT_;         // default update rate of the camera [Hz]
     
 
+    // SDF parameter names
+    const static std::string TARGET_LINK;
+
     public:
       typedef target_camera::msgs::LandingTarget TargetMsg;
 
@@ -41,6 +44,9 @@ namespace gazebo
     private:
       const sensors::CameraSensorPtr FindCameraSensor(physics::ModelPtr model);
 
+      int FindTargets(const sdf::ElementPtr _sdf);
+
+
       common::Time last_time_;          // Time of previous update (simulated time)
 
       physics::WorldPtr world_;            // World the model lives in
@@ -54,17 +60,21 @@ namespace gazebo
       float focal_length_;          // focal length of the camera as image_width2_ / tan(hfov2_) [pix]
       float period_s_;              // period of the camera (1/frequency) [s]
 
-      std::map<physics::ModelPtr, TargetMsg> message_map_;  // Map containing target models and messages for each model
+      std::map<physics::EntityPtr, TargetMsg> message_map_;  // Map containing target models and messages for each model
       event::ConnectionPtr updateConnection_;               // 
       event::ConnectionPtr newFrameConnection_;      // connection between OnNewFrame and camera, triggers OnNewFrame
       transport::PublisherPtr landing_target_pub_;
       transport::NodePtr node_handle_;
   };
 
+  // Default camera parameters
   const float TargetCameraPlugin::HFOV_DEFAULT_ = 1.0f;               // default horizontal field of view [rad]
   const unsigned int TargetCameraPlugin::IMAGE_WIDTH_DEFAULT_  = 640; // default image width [pixel]
   const unsigned int TargetCameraPlugin::IMAGE_HEIGHT_DEFAULT_ = 340; // default image height [pixel]
   const float TargetCameraPlugin::UPDATE_RATE_DEFAULT_ = 30;          // default update rate of the camera [Hz]
+
+  // SDF parameter names
+  const std::string TargetCameraPlugin::TARGET_LINK = "target_link";
 
 }
 #endif

@@ -58,26 +58,9 @@ void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   }
 
 
-  // TODO create model list from attributes
-  std::vector<std::string> model_names;
-  model_names.push_back("truck");
+  // Find targets listed in sdf tag <target_link>
+  FindTargets(_sdf);
 
-
-  std::cout << "###################### !!!!!!!!!!!!!!!! STARTING ADDING MODELS" << std::endl;
-
-  // create a message for each model
-  int target_num = 0;
-  std::vector<std::string>::const_iterator it;
-  for(it = model_names.begin(); it != model_names.end(); it++)
-  {
-    physics::ModelPtr model = world_->GetModel(*it);
-    if(model)
-    {
-      message_map_[model].set_target_num(target_num++);
-      message_map_[model].set_frame(0);
-      std::cout << "###################### !!!!!!!!!!!!!!!! added model: " << *it << std::endl;
-    }
-  }
 
   // connection to publish pose over google proto buf
   node_handle_ = transport::NodePtr(new transport::Node());
@@ -109,7 +92,7 @@ void TargetCameraPlugin::OnNewFrame()
   uint64_t timestamp_us = (uint64_t)(world_->GetSimTime().Double()*1e6);
 
   // iterate over all targets
-  std::map<physics::ModelPtr, TargetMsg>::iterator msg_it; 
+  std::map<physics::EntityPtr, TargetMsg>::iterator msg_it; 
   for(msg_it = message_map_.begin(); msg_it != message_map_.end(); msg_it++)
   {
     TargetMsg& msg = msg_it->second;
@@ -129,7 +112,6 @@ void TargetCameraPlugin::OnNewFrame()
       msg.set_distance(abs(rel_pose.pos.z));
       msg.set_size_x(2*image_width2_);
       msg.set_size_y(2*image_height2_);
-      std::cout << "  pixels: ( " << pixel_x << " | " << pixel_y << " )    timestamp_us " << timestamp_us << std::endl;
       landing_target_pub_->Publish(msg);
     }
   }
@@ -167,4 +149,37 @@ const sensors::CameraSensorPtr TargetCameraPlugin::FindCameraSensor(physics::Mod
   }
   return NULL;
 }
+
+
+int TargetCameraPlugin::FindTargets(const sdf::ElementPtr _sdf)
+{
+  int target_num = 0;
+
+  if(_sdf->HasElement(TARGET_LINK))
+  {
+    for(sdf::ElementPtr target = _sdf->GetElement(TARGET_LINK); target != NULL; target = target->GetNextElement(TARGET_LINK))
+    {
+      // Get Target Link
+      std::string target_name = target->Get<std::string>();
+      physics::EntityPtr target_link = world_->GetEntity(target_name);
+
+      if(target_link != NULL)
+      {
+        std::cout << "target link found: " << target_name << std::endl; 
+
+        // create new entry in message_map
+        message_map_[target_link].set_target_num(target_num++);
+        message_map_[target_link].set_frame(0);
+      }
+      else
+      {
+        std::cout << "target link NOT found: " << target_name << std::endl;
+      }
+    }
+  }
+  
+  return target_num;
+}
+
+
 }

@@ -38,6 +38,7 @@
       </sensor>
     </link>
     <plugin name='TargetCameraPlugin' filename='libgazebo_target_camera_plugin.so'>
+      <target_link>truck::target_platform</target_link>
     </plugin>
     <joint name='joint_cam' type='fixed'>
       <parent>iris::base_link</parent>
