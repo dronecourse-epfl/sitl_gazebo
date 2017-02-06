@@ -183,7 +183,7 @@
         </geometry>
       </collision>
     </link>
-    <link name='platform'>
+    <link name='loading_platform'>
       <pose frame=''>0 0 0.92 0 -0 0</pose>
       <inertial>
         <mass>1</mass>
@@ -207,7 +207,7 @@
           <script>
             <uri>model://truck/materials/scripts</uri>
             <uri>model://truck/materials/textures</uri>
-            <name>truck/platform</name>
+            <name>truck/loading_platform</name>
           </script>
         </material>
       </visual>
@@ -219,31 +219,72 @@
         </geometry>
       </collision>
     </link>
+    <link name='target_platform'>
+      <pose frame=''>0 0 1.07 0 -0 0</pose>
+      <inertial>
+        <mass>1</mass>
+        <inertia>
+          <ixx>0.166667</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.166667</iyy>
+          <iyz>0</iyz>
+          <izz>0.166667</izz>
+        </inertia>
+      </inertial>
+      <visual name='visual'>
+        <geometry>
+          <box>
+            <size>1.5 1.5 0.01</size>
+          </box>
+        </geometry>
+        <material>
+          <lighting>1</lighting>
+          <script>
+            <uri>model://truck/materials/scripts</uri>
+            <uri>model://truck/materials/textures</uri>
+            <name>truck/target_platform</name>
+          </script>
+        </material>
+      </visual>
+      <collision name='collision'>
+        <geometry>
+          <box>
+            <size>1.5 1.5 0.01</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
     <joint name='joint_wheel_rear0' type='fixed'>
-      <parent>platform</parent>
+      <parent>loading_platform</parent>
       <child>wheel_rear0</child>
       <pose frame=''>0 0 0 0 -0 0</pose>
     </joint>
     <joint name='joint_wheel_rear1' type='fixed'>
-      <parent>platform</parent>
+      <parent>loading_platform</parent>
       <child>wheel_rear1</child>
       <pose frame=''>0 0 0 0 -0 0</pose>
     </joint>
     <joint name='joint_wheel_front0' type='fixed'>
-      <parent>platform</parent>
+      <parent>loading_platform</parent>
       <child>wheel_front0</child>
       <pose frame=''>0 0 0 0 -0 0</pose>
     </joint>
     <joint name='joint_wheel_front1' type='fixed'>
-      <parent>platform</parent>
+      <parent>loading_platform</parent>
       <child>wheel_front1</child>
       <pose frame=''>0 0 0 0 -0 0</pose>
     </joint>
     <joint name='joint_cab' type='fixed'>
-      <parent>platform</parent>
+      <parent>loading_platform</parent>
       <child>cab</child>
       <pose frame=''>0 0 0 0 -0 0</pose>
     </joint>
+    <joint name='joint_target' type='fixed'>
+      <parent>loading_platform</parent>
+      <child>target_platform</child>
+      <pose frame=''>0 0 0 0 -0 0</pose>
+    </joint> 
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
     <plugin name='TruckControl' filename='libgazebo_truck_plugin.so'>
