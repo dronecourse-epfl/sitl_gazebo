@@ -109,7 +109,7 @@ void TargetCameraPlugin::OnNewFrame()
       msg.set_time_usec(timestamp_us);
       msg.set_angle_x(pixel_x);
       msg.set_angle_y(pixel_y);
-      msg.set_distance(abs(rel_pose.pos.z));
+      msg.set_distance(abs(rel_pose.pos.GetLength()));
       msg.set_size_x(2*image_width2_);
       msg.set_size_y(2*image_height2_);
       landing_target_pub_->Publish(msg);
