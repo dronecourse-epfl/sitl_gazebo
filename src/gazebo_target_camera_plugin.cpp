@@ -20,7 +20,9 @@ TargetCameraPlugin::TargetCameraPlugin() :
   ModelPlugin(),
   image_width2_(IMAGE_WIDTH_DEFAULT_ / 2.0f),
   image_height2_(IMAGE_HEIGHT_DEFAULT_ / 2.0f),
-  hfov2_(HFOV_DEFAULT_ / 2.0f)
+  hfov2_(HFOV_DEFAULT_ / 2.0f),
+  noise_xy_std_(NOISE_XY_STD_DEFAULT_),
+  noise_z_std_(NOISE_Z_STD_DEFAULT_)
 {
   vfov2_ = hfov2_*image_height2_/((float)image_width2_);
   focal_length_ = image_width2_ / tan(hfov2_);
@@ -103,16 +105,23 @@ void TargetCameraPlugin::OnNewFrame()
 
     float pixel_x = round((focal_length_ * rel_pose.pos.y/rel_pose.pos.z) + image_width2_); // column
     float pixel_y = round((focal_length_ * rel_pose.pos.x/rel_pose.pos.z) + image_height2_); // row
+    float z = abs(rel_pose.pos.GetLength());
+
+    // add noise
+    // pixel_x += math::Rand::GetDblNormal(0.0, noise_xy_std_);
+    // pixel_y += math::Rand::GetDblNormal(0.0, noise_xy_std_);
+    // z +=       math::Rand::GetDblNormal(0.0, noise_z_std_);
 
     if(pixel_x >= 0 && pixel_x < 2*image_width2_ && pixel_y >= 0 && pixel_y < 2*image_height2_)
     {
       msg.set_time_usec(timestamp_us);
       msg.set_angle_x(pixel_x);
       msg.set_angle_y(pixel_y);
-      msg.set_distance(abs(rel_pose.pos.GetLength()));
+      msg.set_distance(z);
       msg.set_size_x(2*image_width2_);
       msg.set_size_y(2*image_height2_);
       landing_target_pub_->Publish(msg);
+
     }
   }
 }

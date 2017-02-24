@@ -17,7 +17,8 @@ namespace gazebo
     const static unsigned int IMAGE_WIDTH_DEFAULT_;  // default image width [pixel]
     const static unsigned int IMAGE_HEIGHT_DEFAULT_; // default image height [pixel]
     const static float UPDATE_RATE_DEFAULT_;         // default update rate of the camera [Hz]
-    
+    const static float NOISE_XY_STD_DEFAULT_;        // default standard deviation of noise in xy [pix^2]
+    const static float NOISE_Z_STD_DEFAULT_;        // default standard deviation of noise in z [m^2]
 
     // SDF parameter names
     const static std::string TARGET_LINK;
@@ -65,6 +66,9 @@ namespace gazebo
       event::ConnectionPtr newFrameConnection_;      // connection between OnNewFrame and camera, triggers OnNewFrame
       transport::PublisherPtr landing_target_pub_;
       transport::NodePtr node_handle_;
+
+      float noise_xy_std_;           // Standard deviation of noise in xy (pixels^2)
+      float noise_z_std_;            // Standard deviation of noise in z (meters^2)
   };
 
   // Default camera parameters
@@ -72,9 +76,13 @@ namespace gazebo
   const unsigned int TargetCameraPlugin::IMAGE_WIDTH_DEFAULT_  = 640; // default image width [pixel]
   const unsigned int TargetCameraPlugin::IMAGE_HEIGHT_DEFAULT_ = 340; // default image height [pixel]
   const float TargetCameraPlugin::UPDATE_RATE_DEFAULT_ = 30;          // default update rate of the camera [Hz]
+  // Default detection parameters
+  const float TargetCameraPlugin::NOISE_XY_STD_DEFAULT_ = 0;//5;        // default standard deviation of noise in xy [pix^2]
+  const float TargetCameraPlugin::NOISE_Z_STD_DEFAULT_ = 0;//0.01;      // default standard deviation of noise in z [m^2]
 
   // SDF parameter names
   const std::string TargetCameraPlugin::TARGET_LINK = "target_link";
+
 
 }
 #endif
