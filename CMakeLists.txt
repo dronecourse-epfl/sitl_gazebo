@@ -17,6 +17,9 @@ include(GNUInstallDirs)
 
 # Add search directory for CMake on OS X
 list(APPEND CMAKE_MODULE_PATH /usr/local/share/cmake/Modules)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+option(BUILD_GSTREAMER_PLUGIN "enable gstreamer plugin" "OFF")
 
 ## System dependencies are found with CMake's conventions
 find_package(PkgConfig REQUIRED)
@@ -24,6 +27,11 @@ find_package(gazebo REQUIRED)
 find_program(px4 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread timer)
+if (BUILD_GSTREAMER_PLUGIN)
+  find_package(GStreamer)
+endif()
+add_subdirectory( external/OpticalFlow OpticalFlow )
+set( OpticalFlow_LIBS "OpticalFlow" )
 
 # see if catkin was invoked to build this
 if (CATKIN_DEVEL_PREFIX)
@@ -99,6 +107,7 @@ endforeach()
 
 include_directories(
   include
+  ${OpticalFlow_INCLUDE_DIRS}
   ${GAZEBO_INCLUDE_DIRS}
   ${GAZEBO_MSG_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
@@ -111,6 +120,7 @@ include_directories(
   # Workaround for OGRE include dirs on Mac OS
   /usr/local/include/OGRE
   /usr/local/include/OGRE/Paging
+  ${GSTREAMER_INCLUDE_DIRS}
   )
 
 link_libraries(
@@ -120,6 +130,7 @@ link_libraries(
   ${Boost_SYSTEM_LIBRARY_RELEASE}
   ${Boost_THREAD_LIBRARY_RELEASE}
   ${Boost_TIMER_LIBRARY_RELEASE}
+  ${GSTREAMER_LIBRARIES}
   )
 
 link_directories(
@@ -135,13 +146,14 @@ set(enable_mavlink_interface "true")
 set(enable_ground_truth "false")
 set(enable_logging "false")
 set(enable_camera "false")
+set(enable_wind "false")
 set(rotors_description_dir "${CMAKE_CURRENT_SOURCE_DIR}/models/rotors_description")
 set(scripts_dir "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/models/iris/iris.sdf
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   COMMAND rm -f ${CMAKE_CURRENT_SOURCE_DIR}/models/iris/iris.sdf
-  COMMAND python ${scripts_dir}/xacro.py -o  ${rotors_description_dir}/urdf/iris_base.urdf  ${rotors_description_dir}/urdf/iris_base.xacro enable_mavlink_interface:=${enable_mavlink_interface} enable_ground_truth:=${enable_ground_truth} enable_logging:=${enable_logging} rotors_description_dir:=${rotors_description_dir}
+  COMMAND python ${scripts_dir}/xacro.py -o  ${rotors_description_dir}/urdf/iris_base.urdf  ${rotors_description_dir}/urdf/iris_base.xacro enable_mavlink_interface:=${enable_mavlink_interface} enable_ground_truth:=${enable_ground_truth} enable_wind:=${enable_wind} enable_logging:=${enable_logging} rotors_description_dir:=${rotors_description_dir}
   COMMAND gz sdf -p  ${rotors_description_dir}/urdf/iris_base.urdf >> ${CMAKE_CURRENT_SOURCE_DIR}/models/iris/iris.sdf
   COMMAND rm -f ${rotors_description_dir}/urdf/iris_base.urdf
   DEPENDS ${rotors_description_dir}/urdf/iris.xacro
@@ -161,6 +173,7 @@ set (msgs
   msgs/lidar.proto
   msgs/CommandMotorSpeed.proto
   msgs/MotorSpeed.proto
+  msgs/Wind.proto
   msgs/LandingTarget.proto
 )
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
@@ -183,11 +196,13 @@ add_library(rotors_gazebo_controller_interface SHARED src/gazebo_controller_inte
 add_library(rotors_gazebo_motor_model SHARED src/gazebo_motor_model.cpp)
 add_library(rotors_gazebo_multirotor_base_plugin SHARED src/gazebo_multirotor_base_plugin.cpp)
 add_library(rotors_gazebo_imu_plugin SHARED src/gazebo_imu_plugin.cpp)
-add_library(gazebo_opticalFlow_plugin SHARED src/flow_settings.c src/flow.c
-  src/gazebo_opticalFlow_plugin.cpp)
+add_library(gazebo_opticalFlow_plugin SHARED src/gazebo_opticalFlow_plugin.cpp)
+target_link_libraries(gazebo_opticalFlow_plugin ${OpticalFlow_LIBS})
 add_library(gazebo_lidar_plugin SHARED src/gazebo_lidar_plugin.cpp)
 add_library(gazebo_target_camera_plugin SHARED src/gazebo_target_camera_plugin.cpp)
 add_library(rotors_gazebo_mavlink_interface SHARED src/gazebo_mavlink_interface.cpp src/geo_mag_declination.cpp)
+add_library(rotors_gazebo_wind_plugin SHARED src/gazebo_wind_plugin.cpp)
+add_library(gazebo_geotagged_images_plugin SHARED src/gazebo_geotagged_images_plugin.cpp)
 add_library(gazebo_truck_plugin SHARED src/gazebo_truck_plugin.cpp)
 
 set(plugins
@@ -199,8 +214,19 @@ set(plugins
   gazebo_lidar_plugin
   gazebo_target_camera_plugin
   rotors_gazebo_mavlink_interface
+  rotors_gazebo_wind_plugin
+  gazebo_geotagged_images_plugin
   gazebo_truck_plugin
   )
+
+if (GSTREAMER_FOUND)
+  add_library(gazebo_gst_camera_plugin SHARED src/gazebo_gst_camera_plugin.cpp)
+  set(plugins
+    ${plugins}
+    gazebo_gst_camera_plugin
+  )
+  message(STATUS "Found GStreamer: adding gst_camera_plugin")
+endif()
 
 # Linux is not consistent with plugin availability, even on Gazebo 7
 #if("${GAZEBO_VERSION}" VERSION_LESS "7.0")
@@ -263,4 +289,3 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${GAZEBO_MAJOR_VERSION}-${PR
 
 include(CPack)
 # vim: set et fenc= ff=unix sts=0 sw=2 ts=2 :
-

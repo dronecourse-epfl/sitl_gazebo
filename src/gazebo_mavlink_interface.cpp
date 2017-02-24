@@ -24,6 +24,22 @@
 
 namespace gazebo {
 
+// Set global reference point
+// Zurich Irchel Park: 47.397742, 8.545594, 488m
+// Seattle downtown (15 deg declination): 47.592182, -122.316031, 86m
+// Moscow downtown: 55.753395, 37.625427, 155m
+
+// Zurich Irchel Park
+static const double lat_zurich = 47.397742 * M_PI / 180;  // rad
+static const double lon_zurich = 8.545594 * M_PI / 180;  // rad
+static const double alt_zurich = 488.0; // meters
+// Seattle downtown (15 deg declination): 47.592182, -122.316031
+// static const double lat_zurich = 47.592182 * M_PI / 180;  // rad
+// static const double lon_zurich = -122.316031 * M_PI / 180;  // rad
+// static const double alt_zurich = 86.0; // meters
+static const float earth_radius = 6353000;  // m
+
+
 GZ_REGISTER_MODEL_PLUGIN(GazeboMavlinkInterface);
 
 GazeboMavlinkInterface::~GazeboMavlinkInterface() {
@@ -385,13 +401,12 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   updateConnection_ = event::Events::ConnectWorldUpdateBegin(
       boost::bind(&GazeboMavlinkInterface::OnUpdate, this, _1));
 
-
   // Subscriber to IMU sensor_msgs::Imu Message and SITL message
   imu_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + imu_sub_topic_, &GazeboMavlinkInterface::ImuCallback, this);
   lidar_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + lidar_sub_topic_, &GazeboMavlinkInterface::LidarCallback, this);
   landingTarget_sub_ = node_handle_->Subscribe("~/" + _model->GetName() + landingTarget_sub_topic_,  &GazeboMavlinkInterface::LandingTargetCallback, this);
   opticalFlow_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + opticalFlow_sub_topic_, &GazeboMavlinkInterface::OpticalFlowCallback, this);
-
+  
   // Publish gazebo's motor_speed message
   motor_velocity_reference_pub_ = node_handle_->Advertise<mav_msgs::msgs::CommandMotorSpeed>("~/" + model_->GetName() + motor_velocity_reference_pub_topic_, 1);
 
@@ -402,15 +417,16 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
 
   gravity_W_ = world_->GetPhysicsEngine()->GetGravity();
 
-  // Magnetic field data for Zurich from WMM2015 (10^5xnanoTesla (E, N, U))
-  //mag_W_ = {0.00771, 0.21523, -0.42741};
-  mag_W_.x = 0.0;
-  mag_W_.y = 0.21523;
+  // Magnetic field data for Zurich from WMM2015 (10^5xnanoTesla (N, E D) n-frame )
+  // mag_n_ = {0.21523, 0.00771, -0.42741};
   // We set the world Y component to zero because we apply
   // the declination based on the global position,
   // and so we need to start without any offsets.
   // The real value for Zurich would be 0.00771
-  mag_W_.z = -0.42741;
+  // frame d is the magnetic north frame
+  mag_d_.x = 0.21523;
+  mag_d_.y = 0;
+  mag_d_.z = -0.42741;
 
   //Create socket
   // udp socket data
@@ -453,6 +469,8 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
 
   fds[0].fd = _fd;
   fds[0].events = POLLIN;
+
+  gps_pub_ = node_handle_->Advertise<msgs::Vector3d>("~/gps_position");
 }
 
 // This gets called by the world update start event.
@@ -495,22 +513,7 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
   math::Vector3 velocity_current_W_xy = velocity_current_W;
   velocity_current_W_xy.z = 0;
 
-  // Set global reference point
-  // Zurich Irchel Park: 47.397742, 8.545594, 488m
-  // Seattle downtown (15 deg declination): 47.592182, -122.316031, 86m
-  // Moscow downtown: 55.753395, 37.625427, 155m
-
   // TODO: Remove GPS message from IMU plugin. Added gazebo GPS plugin. This is temp here.
-  // Zurich Irchel Park
-  const double lat_zurich = 47.397742 * M_PI / 180;  // rad
-  const double lon_zurich = 8.545594 * M_PI / 180;  // rad
-  const double alt_zurich = 488.0; // meters
-  // Seattle downtown (15 deg declination): 47.592182, -122.316031
-  // const double lat_zurich = 47.592182 * M_PI / 180;  // rad
-  // const double lon_zurich = -122.316031 * M_PI / 180;  // rad
-  // const double alt_zurich = 86.0; // meters
-  const float earth_radius = 6353000;  // m
-
   // reproject local position to gps coordinates
   double x_rad = pos_W_I.y / earth_radius; // north
   double y_rad = pos_W_I.x / earth_radius; // east
@@ -524,7 +527,7 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
    lat_rad = lat_zurich;
     lon_rad = lon_zurich;
   }
-  
+
   if (current_time.Double() - last_gps_time_.Double() > gps_update_interval_) {  // 5Hz
     // Raw UDP mavlink
     mavlink_hil_gps_t hil_gps_msg;
@@ -543,6 +546,12 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
     hil_gps_msg.satellites_visible = 10;
 
     send_mavlink_message(MAVLINK_MSG_ID_HIL_GPS, &hil_gps_msg, 200);
+
+    msgs::Vector3d gps_msg;
+    gps_msg.set_x(lat_rad * 180. / M_PI);
+    gps_msg.set_y(lon_rad * 180. / M_PI);
+    gps_msg.set_z(hil_gps_msg.alt / 1000.f);
+    gps_pub_->Publish(gps_msg);
 
     last_gps_time_ = current_time;
   }
@@ -587,54 +596,145 @@ void GazeboMavlinkInterface::send_mavlink_message(const uint8_t msgid, const voi
 
 void GazeboMavlinkInterface::ImuCallback(ImuPtr& imu_message) {
 
-  math::Pose T_W_I = model_->GetWorldPose();
-  math::Vector3 pos_W_I = T_W_I.pos;  // Use the models'world position for GPS and pressure alt.
-  
-  math::Quaternion C_W_I;
-  C_W_I.w = imu_message->orientation().w();
-  C_W_I.x = imu_message->orientation().x();
-  C_W_I.y = imu_message->orientation().y();
-  C_W_I.z = imu_message->orientation().z();
+  // frames
+  // g - gazebo (ENU), east, north, up
+  // r - rotors imu frame (FLU), forward, left, up
+  // b - px4 (FRD) forward, right down
+  // n - px4 (NED) north, east, down
+  math::Quaternion q_gr = math::Quaternion(
+    imu_message->orientation().w(),
+    imu_message->orientation().x(),
+    imu_message->orientation().y(),
+    imu_message->orientation().z());
 
-  // gzerr << "got imu: " << C_W_I << "\n";
+
+  // q_br
+  /*
+  tf.euler2quat(*tf.mat2euler([
+  #        F  L  U
+          [1, 0, 0],  # F
+          [0, -1, 0], # R
+          [0, 0, -1]  # D
+      ]
+  )).round(5)
+  */
+  math::Quaternion q_br(0, 1, 0, 0);
+
+
+  // q_ng
+  /*
+  tf.euler2quat(*tf.mat2euler([
+  #        N  E  D
+          [0, 1, 0],  # E
+          [1, 0, 0],  # N
+          [0, 0, -1]  # U
+      ]
+  )).round(5)
+  */
+  math::Quaternion q_ng(0, 0.70711, 0.70711, 0);
+
+  math::Quaternion q_gb = q_gr*q_br.GetInverse();
+  math::Quaternion q_nb = q_ng*q_gb;
+
+  math::Vector3 pos_g = model_->GetWorldPose().pos;
+  math::Vector3 pos_n = q_ng.RotateVector(pos_g);
+
+  //gzerr << "got imu: " << C_W_I << "\n";
+  //gzerr << "got pose: " << T_W_I.rot << "\n";
   float declination = get_mag_declination(lat_rad, lon_rad);
 
-  math::Quaternion C_D_I(0.0, 0.0, declination);
+  math::Quaternion q_dn(0.0, 0.0, declination);
+  math::Vector3 mag_n = q_dn.RotateVectorReverse(mag_d_);
 
-  math::Vector3 mag_decl = C_D_I.RotateVectorReverse(mag_W_);
+  math::Vector3 vel_b = q_br.RotateVector(model_->GetRelativeLinearVel());
+  math::Vector3 vel_n = q_ng.RotateVector(model_->GetWorldLinearVel());
+  math::Vector3 omega_nb_b = q_br.RotateVector(model_->GetRelativeAngularVel());
 
-  // TODO replace mag_W_ in the line below with mag_decl
-
-  math::Vector3 mag_I = C_W_I.RotateVectorReverse(mag_decl); // TODO: Add noise based on bais and variance like for imu and gyro
-  math::Vector3 body_vel = C_W_I.RotateVectorReverse(model_->GetWorldLinearVel());
-  
   standard_normal_distribution_ = std::normal_distribution<float>(0, 0.01f);
+  math::Vector3 mag_noise_b(
+    standard_normal_distribution_(random_generator_),
+    standard_normal_distribution_(random_generator_),
+    standard_normal_distribution_(random_generator_));
 
-  float mag_noise = standard_normal_distribution_(random_generator_);
+  math::Vector3 accel_b = q_br.RotateVector(math::Vector3(
+    imu_message->linear_acceleration().x(),
+    imu_message->linear_acceleration().y(),
+    imu_message->linear_acceleration().z()));
+  math::Vector3 gyro_b = q_br.RotateVector(math::Vector3(
+    imu_message->angular_velocity().x(),
+    imu_message->angular_velocity().y(),
+    imu_message->angular_velocity().z()));
+  math::Vector3 mag_b = q_nb.RotateVectorReverse(mag_n) + mag_noise_b;
 
   mavlink_hil_sensor_t sensor_msg;
   sensor_msg.time_usec = world_->GetSimTime().nsec*1000;
-  sensor_msg.xacc = imu_message->linear_acceleration().x();
-  sensor_msg.yacc = -imu_message->linear_acceleration().y();
-  sensor_msg.zacc = -imu_message->linear_acceleration().z();
-  sensor_msg.xgyro = imu_message->angular_velocity().x();
-  sensor_msg.ygyro = -imu_message->angular_velocity().y();
-  sensor_msg.zgyro = -imu_message->angular_velocity().z();
-  sensor_msg.xmag = mag_I.x + mag_noise;
-  sensor_msg.ymag = -mag_I.y + mag_noise;
-  sensor_msg.zmag = -mag_I.z + mag_noise;
+  sensor_msg.xacc = accel_b.x;
+  sensor_msg.yacc = accel_b.y;
+  sensor_msg.zacc = accel_b.z;
+  sensor_msg.xgyro = gyro_b.x;
+  sensor_msg.ygyro = gyro_b.y;
+  sensor_msg.zgyro = gyro_b.z;
+  sensor_msg.xmag = mag_b.x;
+  sensor_msg.ymag = mag_b.y;
+  sensor_msg.zmag = mag_b.z;
   sensor_msg.abs_pressure = 0.0;
-  sensor_msg.diff_pressure = 0.5*1.2754*(body_vel.z + body_vel.x)*(body_vel.z + body_vel.x) / 100;
-  sensor_msg.pressure_alt = pos_W_I.z;
+  float rho = 1.2754f; // density of air, TODO why is this not 1.225 as given by std. atmos.
+  sensor_msg.diff_pressure = 0.5f*rho*vel_b.x*vel_b.x / 100;
+
+  float p1, p2;
+
+  // need to add noise to pressure alt
+  do {
+      p1 = rand() * (1.0 / RAND_MAX);
+      p2 = rand() * (1.0 / RAND_MAX);
+  } while (p1 <= FLT_EPSILON);
+
+  float n = sqrtf(-2.0 * logf(p1)) * cosf(2.0f * M_PI * p2);
+  float alt_n = -pos_n.z + n * sqrtf(0.006f);
+
+  sensor_msg.pressure_alt = (std::isfinite(alt_n)) ? alt_n : -pos_n.z;
   sensor_msg.temperature = 0.0;
   sensor_msg.fields_updated = 4095;
 
   //gyro needed for optical flow message
-  optflow_xgyro = imu_message->angular_velocity().x();
-  optflow_ygyro = imu_message->angular_velocity().y();
-  optflow_zgyro = imu_message->angular_velocity().z();
+  optflow_xgyro = gyro_b.x;
+  optflow_ygyro = gyro_b.y;
+  optflow_zgyro = gyro_b.z;
 
-  send_mavlink_message(MAVLINK_MSG_ID_HIL_SENSOR, &sensor_msg, 200);    
+  send_mavlink_message(MAVLINK_MSG_ID_HIL_SENSOR, &sensor_msg, 200);
+
+  // ground truth
+  math::Vector3 accel_true_b = q_br.RotateVector(model_->GetRelativeLinearAccel());
+
+  // send ground truth
+  mavlink_hil_state_quaternion_t hil_state_quat;
+  hil_state_quat.time_usec = world_->GetSimTime().nsec*1000;
+  hil_state_quat.attitude_quaternion[0] = q_nb.w;
+  hil_state_quat.attitude_quaternion[1] = q_nb.x;
+  hil_state_quat.attitude_quaternion[2] = q_nb.y;
+  hil_state_quat.attitude_quaternion[3] = q_nb.z;
+
+  hil_state_quat.rollspeed = omega_nb_b.x;
+  hil_state_quat.pitchspeed = omega_nb_b.y;
+  hil_state_quat.yawspeed = omega_nb_b.z;
+
+  hil_state_quat.lat = lat_rad * 180 / M_PI * 1e7;
+  hil_state_quat.lon = lon_rad * 180 / M_PI * 1e7;
+  hil_state_quat.alt = (-pos_n.z + alt_zurich) * 1000;
+
+  hil_state_quat.vx = vel_n.x * 100;
+  hil_state_quat.vy = vel_n.y * 100;
+  hil_state_quat.vz = vel_n.z * 100;
+
+  // assumed indicated airspeed due to flow aligned with pitot (body x)
+  hil_state_quat.ind_airspeed = vel_b.x;
+  hil_state_quat.true_airspeed = model_->GetWorldLinearVel().GetLength() * 100; //no wind simulated
+
+  hil_state_quat.xacc = accel_true_b.x * 1000;
+  hil_state_quat.yacc = accel_true_b.y * 1000;
+  hil_state_quat.zacc = accel_true_b.z * 1000;
+
+  send_mavlink_message(MAVLINK_MSG_ID_HIL_STATE_QUATERNION, &hil_state_quat, 200);
 }
 
 void GazeboMavlinkInterface::LidarCallback(LidarPtr& lidar_message) {
@@ -644,8 +744,9 @@ void GazeboMavlinkInterface::LidarCallback(LidarPtr& lidar_message) {
   sensor_msg.max_distance = lidar_message->max_distance() * 100.0;
   sensor_msg.current_distance = lidar_message->current_distance() * 100.0;
   sensor_msg.type = 0;
-  sensor_msg.id = lidar_message->id();
-  sensor_msg.orientation = lidar_message->orientation();
+  sensor_msg.id = 0;
+  // to to roll 180 (downward facing for agl measurement)
+  sensor_msg.orientation = 8;
   sensor_msg.covariance = 0;
 
   //distance needed for optical flow message
@@ -678,7 +779,7 @@ void GazeboMavlinkInterface::OpticalFlowCallback(OpticalFlowPtr& opticalFlow_mes
   sensor_msg.integration_time_us = opticalFlow_message->integration_time_us();
   sensor_msg.integrated_x = opticalFlow_message->integrated_x();
   sensor_msg.integrated_y = opticalFlow_message->integrated_y();
-  sensor_msg.integrated_xgyro = optflow_ygyro * opticalFlow_message->integration_time_us() / 1000000.0; //xy switched
+  sensor_msg.integrated_xgyro = -optflow_ygyro * opticalFlow_message->integration_time_us() / 1000000.0; //xy switched
   sensor_msg.integrated_ygyro = optflow_xgyro * opticalFlow_message->integration_time_us() / 1000000.0; //xy switched
   sensor_msg.integrated_zgyro = -optflow_zgyro * opticalFlow_message->integration_time_us() / 1000000.0; //change direction
   sensor_msg.temperature = opticalFlow_message->temperature();
@@ -825,118 +926,8 @@ void GazeboMavlinkInterface::handle_control(double _dt)
         }
         else
         {
-          gzerr << "joiint_control_type[" << joint_control_type_[i] << "] undefined.\n";
+          gzerr << "joint_control_type[" << joint_control_type_[i] << "] undefined.\n";
         }
-      }
-    }
-
-    // legacy method, can eventually be replaced
-    if (propeller_joint_ != NULL)
-    {
-      double rpm = input_reference_[4];
-      double rad_per_sec = 2.0 * M_PI * rpm / 60.0;
-      double target = input_scaling_[4] * rad_per_sec;
-      if (use_propeller_pid_)
-      {
-        double propeller_err = propeller_joint_->GetVelocity(0) - target;
-        double propeller_force = propeller_pid_.Update(propeller_err, _dt);
-        propeller_joint_->SetForce(0, propeller_force);
-        gzerr << "prop curr[" << propeller_joint_->GetVelocity(0)
-              << "] target[" << target
-              << "] rpm[" << rpm
-              << "] rad_per_sec[" << rad_per_sec
-              << "] f[" << propeller_force
-              << "] scale[" << input_scaling_[4]
-              << "]\n";
-      }
-      else
-      {
-        #if GAZEBO_MAJOR_VERSION >= 7
-          // Not desirable to use SetVelocity for parts of a moving model
-          // impact on rest of the dynamic system is non-physical.
-          propeller_joint_->SetVelocity(0, target);
-        #elif GAZEBO_MAJOR_VERSION >= 6
-          // Not ideal as the approach could result in unrealistic impulses, and
-          // is only available in ODE
-          const double kTorque = 2.0;
-          propeller_joint_->SetParam("fmax", 0, kTorque);
-          propeller_joint_->SetParam("vel", 0, target);
-        #endif
-      }
-    }
-
-    if (left_elevon_joint_!= NULL)
-    {
-      double target = input_reference_[5];
-      if (use_left_elevon_pid_)
-      {
-        double left_elevon_err = left_elevon_joint_->GetAngle(0).Radian() - target;
-        double left_elevon_force = left_elevon_pid_.Update(left_elevon_err, _dt);
-        left_elevon_joint_->SetForce(0, left_elevon_force);
-        // gzerr << "left curr[" << left_elevon_joint_->GetAngle(0).Radian()
-        //       << "] ail[" << input_reference_[5]
-        //       << "] ele[" << input_reference_[7]
-        //       << "] target[" << target
-        //       // << "] dt[" << _dt
-        //       << "]\n";
-      }
-      else
-      {
-        // Not desirable to use SetVelocity for parts of a moving model
-        // impact on rest of the dynamic system is non-physical.
-        #if GAZEBO_MAJOR_VERSION >= 6
-          left_elevon_joint_->SetPosition(0, input_reference_[5]);
-        #else
-          left_elevon_joint_->SetAngle(0, input_reference_[5]);
-        #endif
-      }
-    }
-
-    if (right_elevon_joint_ != NULL)
-    {
-      double target = input_reference_[6];
-      if (use_right_elevon_pid_)
-      {
-        double right_elevon_err = right_elevon_joint_->GetAngle(0).Radian() - target;
-        double right_elevon_force = right_elevon_pid_.Update(right_elevon_err, _dt);
-        right_elevon_joint_->SetForce(0, right_elevon_force);
-        // gzerr << "right curr[" << right_elevon_joint_->GetAngle(0).Radian()
-        //       << "] ail[" << input_reference_[6]
-        //       << "] ele[" << input_reference_[7]
-        //       << "] target[" << target
-        //       // << "] dt[" << _dt
-        //       << "]\n";
-      }
-      else
-      {
-        // Not desirable to use SetVelocity for parts of a moving model
-        // impact on rest of the dynamic system is non-physical.
-        #if GAZEBO_MAJOR_VERSION >= 6
-          right_elevon_joint_->SetPosition(0, input_reference_[6]);
-        #else
-          right_elevon_joint_->SetAngle(0, input_reference_[6]);
-        #endif
-      }
-    }
-
-    if (elevator_joint_ != NULL)
-    {
-      if (use_elevator_pid_)
-      {
-        double elevator_err =
-         elevator_joint_->GetAngle(0).Radian() - input_reference_[7];
-        double elevator_force = elevator_pid_.Update(elevator_err, _dt);
-        elevator_joint_->SetForce(0, elevator_force);
-      }
-      else
-      {
-        // Not desirable to use SetVelocity for parts of a moving model
-        // impact on rest of the dynamic system is non-physical.
-        #if GAZEBO_MAJOR_VERSION >= 6
-          elevator_joint_->SetPosition(0, input_reference_[7]);
-        #else
-          elevator_joint_->SetAngle(0, input_reference_[7]);
-        #endif
       }
     }
 }
