@@ -22,6 +22,9 @@ namespace gazebo
 
     // SDF parameter names (values defined after class definition)
     const static std::string TARGET_LINK;
+    const static std::string NOISE_XY_STD_NAME;
+    const static std::string NOISE_Z_STD_NAME;
+
 
     public:
       typedef target_camera::msgs::LandingTarget TargetMsg;
@@ -46,6 +49,8 @@ namespace gazebo
       const sensors::CameraSensorPtr FindCameraSensor(physics::ModelPtr model);
 
       int FindTargets(const sdf::ElementPtr _sdf);
+
+      bool FindDetectionParameters(const sdf::ElementPtr _sdf);
 
       bool SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, uint32_t timestamp_ms);
 
@@ -86,6 +91,8 @@ namespace gazebo
 
   // SDF parameter names
   const std::string TargetCameraPlugin::TARGET_LINK = "target_link";
+  const std::string TargetCameraPlugin::NOISE_XY_STD_NAME = "noise_xy";
+  const std::string TargetCameraPlugin::NOISE_Z_STD_NAME = "noise_z";
 
 
 }

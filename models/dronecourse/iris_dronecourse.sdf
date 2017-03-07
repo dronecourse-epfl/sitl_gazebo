@@ -39,6 +39,8 @@
     </link>
     <plugin name='TargetCameraPlugin' filename='libgazebo_target_camera_plugin.so'>
       <target_link>truck::target_platform</target_link>
+      <noise_xy>20</noise_xy>
+      <noise_z>10</noise_z>
       <mavlink_addr>INADDR_ANY</mavlink_addr>
       <mavlink_udp_port>14580</mavlink_udp_port>
     </plugin>
