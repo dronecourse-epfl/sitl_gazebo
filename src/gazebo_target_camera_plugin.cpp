@@ -73,6 +73,9 @@ void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   // Find targets listed in sdf tag <target_link>
   FindTargets(_sdf);
 
+  // Load detection parameters
+  FindDetectionParameters(_sdf);
+
   // connection to publish pose over google proto buf
   node_handle_ = transport::NodePtr(new transport::Node());
   node_handle_->Init();
@@ -204,6 +207,29 @@ int TargetCameraPlugin::FindTargets(const sdf::ElementPtr _sdf)
 }
 
 
+bool TargetCameraPlugin::FindDetectionParameters(const sdf::ElementPtr _sdf)
+{
+  bool success = true;
+  if(_sdf->HasElement(NOISE_XY_STD_NAME))
+  {
+    sdf::ElementPtr element = _sdf->GetElement(NOISE_XY_STD_NAME);
+    noise_xy_std_ = element->Get<float>();
+    std::cout << "setting xy noise to " << noise_xy_std_ << std::endl;
+  } else {
+    success = false;
+  }
+
+  if(_sdf->HasElement(NOISE_Z_STD_NAME))
+  {
+    sdf::ElementPtr element = _sdf->GetElement(NOISE_Z_STD_NAME);
+    noise_z_std_ = element->Get<float>();
+    std::cout << "setting z noise to " << noise_z_std_ << std::endl;
+  } else {
+    success = false;
+  }
+
+  return success;
+}
 
 bool TargetCameraPlugin::SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, uint32_t timestamp_ms)
 {
