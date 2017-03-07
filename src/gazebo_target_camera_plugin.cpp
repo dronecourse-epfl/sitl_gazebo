@@ -2,10 +2,18 @@
 #include <gazebo/sensors/sensors.hh>
 #include "gazebo/rendering/Camera.hh"
 
-
-
-
 namespace gazebo {
+
+
+// Zurich Irchel Park
+static const double lat_zurich = 47.397742 * M_PI / 180;  // rad
+static const double lon_zurich = 8.545594 * M_PI / 180;  // rad
+static const double alt_zurich = 488.0; // meters
+// Seattle downtown (15 deg declination): 47.592182, -122.316031
+// static const double lat_zurich = 47.592182 * M_PI / 180;  // rad
+// static const double lon_zurich = -122.316031 * M_PI / 180;  // rad
+// static const double alt_zurich = 86.0; // meters
+static const float earth_radius = 6353000;  // m
 
 GZ_REGISTER_MODEL_PLUGIN(TargetCameraPlugin);
 
@@ -17,7 +25,8 @@ void printPose(const math::Pose& pose, const std::string& name)
 }
 
 TargetCameraPlugin::TargetCameraPlugin() :
-  ModelPlugin(),
+  // GazeboMavlinkPlugin(),
+  // ModelPlugin(),
   image_width2_(IMAGE_WIDTH_DEFAULT_ / 2.0f),
   image_height2_(IMAGE_HEIGHT_DEFAULT_ / 2.0f),
   hfov2_(HFOV_DEFAULT_ / 2.0f),
@@ -32,6 +41,8 @@ TargetCameraPlugin::TargetCameraPlugin() :
 
 void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 {
+  GazeboMavlinkPlugin::Load(_model, _sdf);
+ 
   world_ = _model->GetWorld();
 
   // -----------------------
@@ -59,10 +70,8 @@ void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&TargetCameraPlugin::OnUpdate, this, _1));
   }
 
-
   // Find targets listed in sdf tag <target_link>
   FindTargets(_sdf);
-
 
   // connection to publish pose over google proto buf
   node_handle_ = transport::NodePtr(new transport::Node());
@@ -123,6 +132,10 @@ void TargetCameraPlugin::OnNewFrame()
       landing_target_pub_->Publish(msg);
 
     }
+
+    SendPositionMsg(msg.target_num(), target_pose, timestamp_us/1000);
+    SendGlobalPositionMsg(msg.target_num(), target_pose, timestamp_us/1000);
+
   }
 }
 
@@ -190,5 +203,56 @@ int TargetCameraPlugin::FindTargets(const sdf::ElementPtr _sdf)
   return target_num;
 }
 
+
+
+bool TargetCameraPlugin::SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, uint32_t timestamp_ms)
+{
+  mavlink_local_position_ned_t msg;
+  msg.time_boot_ms = timestamp_ms;
+  msg.x = target_pose.pos.y;
+  msg.y = target_pose.pos.x;
+  msg.z = -target_pose.pos.z;
+  msg.vx = 0;
+  msg.vy = 0;
+  msg.vz = 0;
+
+  send_mavlink_message(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &msg, target_id + 100, 200);
+  return true;
+}
+
+
+bool TargetCameraPlugin::SendGlobalPositionMsg(uint16_t target_id, const math::Pose& pose, uint32_t timestamp_ms)
+{
+  math::Vector3 pos_lf = pose.pos; // position in local frame
+
+  // TODO: Remove GPS message from IMU plugin. Added gazebo GPS plugin. This is temp here.
+  // reproject local position to gps coordinates
+  double x_rad = pos_lf.y / earth_radius; // north
+  double y_rad = pos_lf.x / earth_radius; // east
+  double c = sqrt(x_rad * x_rad + y_rad * y_rad);
+  double sin_c = sin(c);
+  double cos_c = cos(c);
+  float lat_rad = lat_zurich;
+  float lon_rad = lon_zurich;
+
+  if (c != 0.0) {
+    lat_rad = asin(cos_c * sin(lat_zurich) + (x_rad * sin_c * cos(lat_zurich)) / c);
+    lon_rad = (lon_zurich + atan2(y_rad * sin_c, c * cos(lat_zurich) * cos_c - x_rad * sin(lat_zurich) * sin_c));
+  }
+
+  mavlink_global_position_int_t msg;
+  msg.time_boot_ms = timestamp_ms;
+  msg.lat = lat_rad * 180 / M_PI * 1e7;
+  msg.lon = lon_rad * 180 / M_PI * 1e7;
+  msg.alt = (pos_lf.z + alt_zurich) * 1000;
+  msg.relative_alt = pos_lf.z * 1000 ;
+  msg.vx = 0;
+  msg.vy = 0;
+  msg.vz = 0;
+  msg.hdg = 0;
+
+  send_mavlink_message(MAVLINK_MSG_ID_GLOBAL_POSITION_INT, &msg, target_id + 100, 200);
+
+}
 
 }

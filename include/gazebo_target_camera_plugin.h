@@ -1,7 +1,7 @@
 #ifndef _GAZEBO_TARGET_CAMERA_PLUGIN_HH_
 #define _GAZEBO_TARGET_CAMERA_PLUGIN_HH_
 
-#include "gazebo/common/Plugin.hh"
+#include "gazebo_mavlink_plugin.h"
 #include <gazebo/physics/physics.hh>
 #include "gazebo/gazebo.hh"
 #include "LandingTarget.pb.h"
@@ -10,7 +10,7 @@
 namespace gazebo
 {
 
-  class TargetCameraPlugin : public ModelPlugin
+  class TargetCameraPlugin : public GazeboMavlinkPlugin
   {
     // Default camera parameters (values defined after class definition)
     const static float HFOV_DEFAULT_;                // default horizontal field of view [rad]
@@ -20,7 +20,7 @@ namespace gazebo
     const static float NOISE_XY_STD_DEFAULT_;        // default standard deviation of noise in xy [pix^2]
     const static float NOISE_Z_STD_DEFAULT_;        // default standard deviation of noise in z [m^2]
 
-    // SDF parameter names
+    // SDF parameter names (values defined after class definition)
     const static std::string TARGET_LINK;
 
     public:
@@ -46,6 +46,10 @@ namespace gazebo
       const sensors::CameraSensorPtr FindCameraSensor(physics::ModelPtr model);
 
       int FindTargets(const sdf::ElementPtr _sdf);
+
+      bool SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, uint32_t timestamp_ms);
+
+      bool SendGlobalPositionMsg(uint16_t target_id, const math::Pose& pose, uint32_t timestamp_ms);
 
 
       common::Time last_time_;          // Time of previous update (simulated time)

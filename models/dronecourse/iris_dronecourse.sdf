@@ -39,6 +39,8 @@
     </link>
     <plugin name='TargetCameraPlugin' filename='libgazebo_target_camera_plugin.so'>
       <target_link>truck::target_platform</target_link>
+      <mavlink_addr>INADDR_ANY</mavlink_addr>
+      <mavlink_udp_port>14580</mavlink_udp_port>
     </plugin>
     <joint name='joint_cam' type='fixed'>
       <parent>iris::base_link</parent>
