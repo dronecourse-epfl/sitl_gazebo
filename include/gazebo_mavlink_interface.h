@@ -236,5 +236,10 @@ class GazeboMavlinkInterface : public ModelPlugin {
   in_addr_t mavlink_addr_;
   int mavlink_udp_port_;
 
+  // GPS coordinates for gazebo origin
+  double origin_lat_;
+  double origin_lon_;
+  double origin_alt_;
+
   };
 }
