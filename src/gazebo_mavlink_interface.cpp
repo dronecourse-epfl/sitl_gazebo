@@ -30,8 +30,8 @@ namespace gazebo {
 // Moscow downtown: 55.753395, 37.625427, 155m
 
 // Zurich Irchel Park
-static const double lat_zurich = 47.397742 * M_PI / 180;  // rad
-static const double lon_zurich = 8.545594 * M_PI / 180;  // rad
+static const double lat_zurich = 47.397742;  // rad
+static const double lon_zurich = 8.545594;  // rad
 static const double alt_zurich = 488.0; // meters
 // Seattle downtown (15 deg declination): 47.592182, -122.316031
 // static const double lat_zurich = 47.592182 * M_PI / 180;  // rad
@@ -471,6 +471,13 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   fds[0].events = POLLIN;
 
   gps_pub_ = node_handle_->Advertise<msgs::Vector3d>("~/gps_position");
+
+  // Get GPS coordinates for gazebo origin from world sdf and convert to rad
+  getSdfParam<double>(_sdf, "gps_origin_lat", origin_lat_, lat_zurich);
+  getSdfParam<double>(_sdf, "gps_origin_lon", origin_lon_, lon_zurich);
+  getSdfParam<double>(_sdf, "gps_origin_alt", origin_alt_, alt_zurich);
+  origin_lat_ *= M_PI / 180.0;
+  origin_lon_ *= M_PI / 180.0;
 }
 
 // This gets called by the world update start event.
@@ -521,11 +528,11 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
   double sin_c = sin(c);
   double cos_c = cos(c);
   if (c != 0.0) {
-    lat_rad = asin(cos_c * sin(lat_zurich) + (x_rad * sin_c * cos(lat_zurich)) / c);
-    lon_rad = (lon_zurich + atan2(y_rad * sin_c, c * cos(lat_zurich) * cos_c - x_rad * sin(lat_zurich) * sin_c));
+    lat_rad = asin(cos_c * sin(origin_lat_) + (x_rad * sin_c * cos(origin_lat_)) / c);
+    lon_rad = (origin_lon_ + atan2(y_rad * sin_c, c * cos(origin_lat_) * cos_c - x_rad * sin(origin_lat_) * sin_c));
   } else {
-   lat_rad = lat_zurich;
-    lon_rad = lon_zurich;
+    lat_rad = origin_lat_;
+    lon_rad = origin_lon_;
   }
 
   if (current_time.Double() - last_gps_time_.Double() > gps_update_interval_) {  // 5Hz
@@ -535,7 +542,7 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
     hil_gps_msg.fix_type = 3;
     hil_gps_msg.lat = lat_rad * 180 / M_PI * 1e7;
     hil_gps_msg.lon = lon_rad * 180 / M_PI * 1e7;
-    hil_gps_msg.alt = (pos_W_I.z + alt_zurich) * 1000;
+    hil_gps_msg.alt = (pos_W_I.z + origin_alt_) * 1000;
     hil_gps_msg.eph = 100;
     hil_gps_msg.epv = 100;
     hil_gps_msg.vel = velocity_current_W_xy.GetLength() * 100;
@@ -720,7 +727,7 @@ void GazeboMavlinkInterface::ImuCallback(ImuPtr& imu_message) {
 
   hil_state_quat.lat = lat_rad * 180 / M_PI * 1e7;
   hil_state_quat.lon = lon_rad * 180 / M_PI * 1e7;
-  hil_state_quat.alt = (-pos_n.z + alt_zurich) * 1000;
+  hil_state_quat.alt = (-pos_n.z + origin_alt_) * 1000;
 
   hil_state_quat.vx = vel_n.x * 100;
   hil_state_quat.vy = vel_n.y * 100;
