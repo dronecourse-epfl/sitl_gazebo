@@ -478,6 +478,13 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   getSdfParam<double>(_sdf, "gps_origin_alt", origin_alt_, alt_zurich);
   origin_lat_ *= M_PI / 180.0;
   origin_lon_ *= M_PI / 180.0;
+
+  mavlink_set_gps_global_origin_t msg;
+  msg.latitude =  origin_lat_ * 180 / M_PI * 1e7;
+  msg.longitude = origin_lon_ * 180 / M_PI * 1e7;
+  msg.altitude = origin_alt_ * 1000;
+  msg.target_system = 1;
+  send_mavlink_message(MAVLINK_MSG_ID_SET_GPS_GLOBAL_ORIGIN, &msg, 200);
 }
 
 // This gets called by the world update start event.
