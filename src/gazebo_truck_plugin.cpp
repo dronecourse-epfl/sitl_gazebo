@@ -37,7 +37,7 @@ void GazeboTruckPlugin::OnUpdate(const common::UpdateInfo& /*_info*/) {
   double dt = (current_time - last_time_).Double();
   last_time_ = current_time;
 
-  float lin_speed = 1.5;
+  float lin_speed = 10;
   float rot_speed = lin_speed/radius_;
 
   math::Vector3 pos;
