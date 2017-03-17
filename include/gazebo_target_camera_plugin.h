@@ -25,6 +25,8 @@ namespace gazebo
     const static std::string NOISE_XY_STD_NAME;
     const static std::string NOISE_Z_STD_NAME;
 
+    typedef ignition::math::Vector3d Vector;
+    typedef ignition::math::Pose3d Pose;
 
     public:
       typedef target_camera::msgs::LandingTarget TargetMsg;
@@ -52,7 +54,7 @@ namespace gazebo
 
       bool FindDetectionParameters(const sdf::ElementPtr _sdf);
 
-      bool SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, uint32_t timestamp_ms);
+      bool SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, const Vector& speed, uint32_t timestamp_ms);
 
       bool SendGlobalPositionMsg(uint16_t target_id, const math::Pose& pose, uint32_t timestamp_ms);
 

@@ -136,7 +136,8 @@ void TargetCameraPlugin::OnNewFrame()
 
     }
 
-    SendPositionMsg(msg.target_num(), target_pose, timestamp_us/1000);
+    Vector target_vel = msg_it->first->GetWorldLinearVel().Ign();
+    SendPositionMsg(msg.target_num(), target_pose, target_vel, timestamp_us/1000);
     SendGlobalPositionMsg(msg.target_num(), target_pose, timestamp_us/1000);
 
   }
@@ -231,16 +232,16 @@ bool TargetCameraPlugin::FindDetectionParameters(const sdf::ElementPtr _sdf)
   return success;
 }
 
-bool TargetCameraPlugin::SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, uint32_t timestamp_ms)
+bool TargetCameraPlugin::SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, const Vector& speed, uint32_t timestamp_ms)
 {
   mavlink_local_position_ned_t msg;
   msg.time_boot_ms = timestamp_ms;
   msg.x = target_pose.pos.y;
   msg.y = target_pose.pos.x;
   msg.z = -target_pose.pos.z;
-  msg.vx = 0;
-  msg.vy = 0;
-  msg.vz = 0;
+  msg.vx = speed.Y();
+  msg.vy = speed.X();
+  msg.vz = -speed.Z();
 
   send_mavlink_message(MAVLINK_MSG_ID_LOCAL_POSITION_NED, &msg, target_id + 100, 200);
   return true;
