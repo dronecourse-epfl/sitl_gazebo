@@ -1,21 +1,16 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
   <world name="default">
-    <!-- A global light source -->
     <include>
       <uri>model://sun</uri>
     </include>
     <include>
       <uri>model://truck</uri>
-      <pose frame=''>0 10 0 0 0 0</pose>
+      <pose frame=''>0 -20 0 0 0 0</pose>
     </include>
-    <!-- A ground plane -->
-    <!--<include>
-      <uri>model://ground_plane</uri>
-    </include>-->
     <include>
       <uri>model://dronecourse_arena</uri>
-      <pose frame=''>60 0 0 0 0 0</pose>
+      <pose frame=''>20 0 0 0 0 0</pose>
     </include>
     <include>
       <uri>model://dronecourse</uri>

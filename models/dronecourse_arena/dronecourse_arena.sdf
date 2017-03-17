@@ -7,7 +7,7 @@
         <geometry>
           <plane>
             <normal>0 0 1</normal>
-            <size>90 30</size>
+            <size>100 60</size>
           </plane>
         </geometry>
         <surface>
@@ -24,7 +24,7 @@
         <geometry>
           <plane>
             <normal>0 0 1</normal>
-            <size>180 60 </size>
+            <size>100 60 </size>
           </plane>
         </geometry>
         <material>
