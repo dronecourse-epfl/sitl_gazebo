@@ -102,7 +102,7 @@ void TargetCameraPlugin::OnUpdate(const common::UpdateInfo& info)
 
 void TargetCameraPlugin::OnNewFrame()
 {
-  const math::Pose& camera_pose = camera_link_->GetWorldPose();
+  const Pose& camera_pose = camera_link_->GetWorldPose().Ign();
   uint64_t timestamp_us = (uint64_t)(world_->GetSimTime().Double()*1e6);
 
   // iterate over all targets
@@ -112,12 +112,12 @@ void TargetCameraPlugin::OnNewFrame()
     TargetMsg& msg = msg_it->second;
 
     // Get bearing of target in camera frame
-    const math::Pose& target_pose = msg_it->first->GetWorldPose();
-    math::Pose rel_pose = target_pose - camera_pose;
+    const Pose& target_pose = msg_it->first->GetWorldPose().Ign();
+    const Vector rel_pos = (target_pose - camera_pose).Pos();
 
-    float pixel_x = round((focal_length_ * rel_pose.pos.y/rel_pose.pos.z) + image_width2_); // column
-    float pixel_y = round((focal_length_ * rel_pose.pos.x/rel_pose.pos.z) + image_height2_); // row
-    float z = abs(rel_pose.pos.GetLength());
+    float pixel_x = round((focal_length_ * rel_pos.Y()/rel_pos.Z()) + image_width2_); // column
+    float pixel_y = round((focal_length_ * rel_pos.X()/rel_pos.Z()) + image_height2_); // row
+    float z = abs(rel_pos.Length());
 
     // add noise
     // pixel_x += math::Rand::GetDblNormal(0.0, noise_xy_std_);
@@ -137,10 +137,16 @@ void TargetCameraPlugin::OnNewFrame()
     }
 
     Vector target_vel = msg_it->first->GetWorldLinearVel().Ign();
-    SendPositionMsg(msg.target_num(), target_pose, target_vel, timestamp_us/1000);
+    SendPositionMsg(msg.target_num(), target_pose.Pos(), target_vel, timestamp_us/1000);
     SendGlobalPositionMsg(msg.target_num(), target_pose, timestamp_us/1000);
+    // Vector camera_vel = camera_link_->GetWorldLinearVel().Ign();
+    // SendPositionMsg(msg.target_num(), camera_pose.Ign().Pos(), camera_vel, timestamp_us/1000);
+    // SendGlobalPositionMsg(msg.target_num(), camera_pose.Ign(), timestamp_us/1000);
 
   }
+
+  SendPositionMsg(-1, camera_pose.Pos(),  camera_link_->GetWorldLinearVel().Ign(), timestamp_us/1000);
+  SendGlobalPositionMsg(-1, camera_pose, timestamp_us/1000);
 }
 
 
@@ -232,13 +238,13 @@ bool TargetCameraPlugin::FindDetectionParameters(const sdf::ElementPtr _sdf)
   return success;
 }
 
-bool TargetCameraPlugin::SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, const Vector& speed, uint32_t timestamp_ms)
+bool TargetCameraPlugin::SendPositionMsg(uint16_t target_id, const Vector& target_pos, const Vector& speed, uint32_t timestamp_ms)
 {
   mavlink_local_position_ned_t msg;
   msg.time_boot_ms = timestamp_ms;
-  msg.x = target_pose.pos.y;
-  msg.y = target_pose.pos.x;
-  msg.z = -target_pose.pos.z;
+  msg.x = target_pos.Y();
+  msg.y = target_pos.X();
+  msg.z = -target_pos.Z();
   msg.vx = speed.Y();
   msg.vy = speed.X();
   msg.vz = -speed.Z();
@@ -248,14 +254,14 @@ bool TargetCameraPlugin::SendPositionMsg(uint16_t target_id, const math::Pose& t
 }
 
 
-bool TargetCameraPlugin::SendGlobalPositionMsg(uint16_t target_id, const math::Pose& pose, uint32_t timestamp_ms)
+bool TargetCameraPlugin::SendGlobalPositionMsg(uint16_t target_id, const Pose& pose, uint32_t timestamp_ms)
 {
-  math::Vector3 pos_lf = pose.pos; // position in local frame
+  Vector pos_lf = pose.Pos(); // position in local frame
 
   // TODO: Remove GPS message from IMU plugin. Added gazebo GPS plugin. This is temp here.
   // reproject local position to gps coordinates
-  double x_rad = pos_lf.y / earth_radius; // north
-  double y_rad = pos_lf.x / earth_radius; // east
+  double x_rad = pos_lf.Y() / earth_radius; // north
+  double y_rad = pos_lf.X() / earth_radius; // east
   double c = sqrt(x_rad * x_rad + y_rad * y_rad);
   double sin_c = sin(c);
   double cos_c = cos(c);
@@ -267,16 +273,22 @@ bool TargetCameraPlugin::SendGlobalPositionMsg(uint16_t target_id, const math::P
     lon_rad = (lon_zurich + atan2(y_rad * sin_c, c * cos(lat_zurich) * cos_c - x_rad * sin(lat_zurich) * sin_c));
   }
 
+  float heading = M_PI/2.0-pose.Rot().Yaw();
+  while(heading > 2*M_PI)
+    heading -= 2*M_PI;
+  while(heading < 0)
+    heading += 2*M_PI;
+
   mavlink_global_position_int_t msg;
   msg.time_boot_ms = timestamp_ms;
   msg.lat = lat_rad * 180 / M_PI * 1e7;
   msg.lon = lon_rad * 180 / M_PI * 1e7;
-  msg.alt = (pos_lf.z + alt_zurich) * 1000;
-  msg.relative_alt = pos_lf.z * 1000 ;
+  msg.alt = (pos_lf.Z() + alt_zurich) * 1000;
+  msg.relative_alt = pos_lf.Z() * 1000 ;
   msg.vx = 0;
   msg.vy = 0;
   msg.vz = 0;
-  msg.hdg = 0;
+  msg.hdg = heading * 18000/M_PI;
 
   send_mavlink_message(MAVLINK_MSG_ID_GLOBAL_POSITION_INT, &msg, target_id + 100, 200);
 
