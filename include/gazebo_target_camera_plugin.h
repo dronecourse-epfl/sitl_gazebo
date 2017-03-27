@@ -54,9 +54,9 @@ namespace gazebo
 
       bool FindDetectionParameters(const sdf::ElementPtr _sdf);
 
-      bool SendPositionMsg(uint16_t target_id, const math::Pose& target_pose, const Vector& speed, uint32_t timestamp_ms);
+      bool SendPositionMsg(uint16_t target_id, const Vector& target_pos, const Vector& speed, uint32_t timestamp_ms);
 
-      bool SendGlobalPositionMsg(uint16_t target_id, const math::Pose& pose, uint32_t timestamp_ms);
+      bool SendGlobalPositionMsg(uint16_t target_id, const Pose& pose, uint32_t timestamp_ms);
 
 
       common::Time last_time_;          // Time of previous update (simulated time)

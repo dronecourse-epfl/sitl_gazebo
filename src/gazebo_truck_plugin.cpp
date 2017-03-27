@@ -136,7 +136,7 @@ void GazeboTruckPlugin::OnUpdate(const common::UpdateInfo& /*_info*/) {
       update_curve(pose, C1, _radius, COUNTER_CLOCK_WISE);
       if(pos.X() > C1.X() && pos.Y() > C1.Y())
       {
-        _track_section = choose_binary(6,8);
+        _track_section = choose_binary(8,6);
       }
       break;
 
@@ -152,7 +152,7 @@ void GazeboTruckPlugin::OnUpdate(const common::UpdateInfo& /*_info*/) {
       update_curve(pose, C1, _radius, CLOCK_WISE);
       if(pos.X() > C1.X() && pos.Y() < C1.Y())
       {
-        _track_section = choose_binary(4,10);
+        _track_section = choose_binary(10,4);
       }
       break;
   }
