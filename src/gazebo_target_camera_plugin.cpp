@@ -120,9 +120,9 @@ void TargetCameraPlugin::OnNewFrame()
     float z = abs(rel_pos.Length());
 
     // add noise
-    // pixel_x += math::Rand::GetDblNormal(0.0, noise_xy_std_);
-    // pixel_y += math::Rand::GetDblNormal(0.0, noise_xy_std_);
-    // z +=       math::Rand::GetDblNormal(0.0, noise_z_std_);
+    pixel_x += math::Rand::GetDblNormal(0.0, noise_xy_std_);
+    pixel_y += math::Rand::GetDblNormal(0.0, noise_xy_std_);
+    z +=       math::Rand::GetDblNormal(0.0, noise_z_std_);
 
     if(pixel_x >= 0 && pixel_x < 2*image_width2_ && pixel_y >= 0 && pixel_y < 2*image_height2_)
     {
