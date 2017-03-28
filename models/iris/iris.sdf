@@ -519,10 +519,6 @@
           <joint_control_type>position</joint_control_type>
         </channel>
       </control_channels>
-      <!-- origin at Lausanne EPFL Esplanade-->
-      <gps_origin_lat>46.51852236174565</gps_origin_lat>
-      <gps_origin_lon>6.566044801857777</gps_origin_lon>
-      <gps_origin_alt>400.0</gps_origin_alt>
     </plugin>
     <static>0</static>
     <plugin name='rotors_gazebo_imu_plugin' filename='librotors_gazebo_imu_plugin.so'>
@@ -532,11 +528,11 @@
       <gyroscopeNoiseDensity>0.0003394</gyroscopeNoiseDensity>
       <gyroscopeRandomWalk>3.8785e-05</gyroscopeRandomWalk>
       <gyroscopeBiasCorrelationTime>1000.0</gyroscopeBiasCorrelationTime>
-      <gyroscopeTurnOnBiasSigma>0.0087</gyroscopeTurnOnBiasSigma>
+      <gyroscopeTurnOnBiasSigma>0.000</gyroscopeTurnOnBiasSigma>
       <accelerometerNoiseDensity>0.004</accelerometerNoiseDensity>
       <accelerometerRandomWalk>0.006</accelerometerRandomWalk>
       <accelerometerBiasCorrelationTime>300.0</accelerometerBiasCorrelationTime>
-      <accelerometerTurnOnBiasSigma>0.196</accelerometerTurnOnBiasSigma>
+      <accelerometerTurnOnBiasSigma>0.0</accelerometerTurnOnBiasSigma>
     </plugin>
   </model>
 </sdf>
