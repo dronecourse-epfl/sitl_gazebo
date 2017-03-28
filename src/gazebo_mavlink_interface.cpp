@@ -656,6 +656,7 @@ void GazeboMavlinkInterface::ImuCallback(ImuPtr& imu_message) {
   //gzerr << "got imu: " << C_W_I << "\n";
   //gzerr << "got pose: " << T_W_I.rot << "\n";
   float declination = get_mag_declination(lat_rad, lon_rad);
+  declination = 0;
 
   math::Quaternion q_dn(0.0, 0.0, declination);
   math::Vector3 mag_n = q_dn.RotateVectorReverse(mag_d_);
@@ -691,6 +692,7 @@ void GazeboMavlinkInterface::ImuCallback(ImuPtr& imu_message) {
   sensor_msg.xmag = mag_b.x;
   sensor_msg.ymag = mag_b.y;
   sensor_msg.zmag = mag_b.z;
+
   sensor_msg.abs_pressure = 0.0;
   float rho = 1.2754f; // density of air, TODO why is this not 1.225 as given by std. atmos.
   sensor_msg.diff_pressure = 0.5f*rho*vel_b.x*vel_b.x / 100;
