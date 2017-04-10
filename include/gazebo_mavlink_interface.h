@@ -37,6 +37,7 @@
 #include "lidar.pb.h"
 #include "sonarSens.pb.h"
 #include "LandingTarget.pb.h"
+#include "TargetPositionImage.pb.h"
 
 #include <boost/bind.hpp>
 
@@ -46,7 +47,9 @@
 #include <random>
 #include <sdf/sdf.hh>
 
-#include "mavlink/v2.0/common/mavlink.h"
+// TODO use mavlink 2.0
+// #include "mavlink/v2.0/common/mavlink.h"
+#include "mavlink/v1.0/dronecourse/mavlink.h"
 
 #include "gazebo/math/Vector3.hh"
 #include <sys/socket.h>
@@ -59,7 +62,7 @@ namespace gazebo {
 typedef const boost::shared_ptr<const mav_msgs::msgs::CommandMotorSpeed> CommandMotorSpeedPtr;
 typedef const boost::shared_ptr<const sensor_msgs::msgs::Imu> ImuPtr;
 typedef const boost::shared_ptr<const lidar_msgs::msgs::lidar> LidarPtr;
-typedef const boost::shared_ptr<const target_camera::msgs::LandingTarget> LandingTargetPtr;
+typedef const boost::shared_ptr<const target_camera::msgs::TargetPositionImage> TargetPosPtr;
 typedef const boost::shared_ptr<const opticalFlow_msgs::msgs::opticalFlow> OpticalFlowPtr;
 typedef const boost::shared_ptr<const sonarSens_msgs::msgs::sonarSens> SonarSensPtr;
 
@@ -76,6 +79,7 @@ static const std::string kDefaultOpticalFlowTopic = "/camera/link/opticalFlow";
 static const std::string kDefaultSonarTopic = "/sonar_model/link/sonar";
 static const std::string kDefaultLandingTargetTopic = "/LandingTarget";
 
+static const std::string kDefaultTargetPosTopic = "/TargetPos";
 class GazeboMavlinkInterface : public ModelPlugin {
  public:
   GazeboMavlinkInterface()
@@ -89,6 +93,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
         lidar_sub_topic_(kDefaultLidarTopic),
         sonar_sub_topic_(kDefaultSonarTopic),
         landingTarget_sub_topic_(kDefaultLandingTargetTopic),
+        targetPos_sub_topic_(kDefaultTargetPosTopic),
         model_{},
         world_(nullptr),
         left_elevon_joint_(nullptr),
@@ -159,6 +164,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
   void LidarCallback(LidarPtr& lidar_msg);
   void SonarCallback(SonarSensPtr& sonar_msg);
   void LandingTargetCallback(LandingTargetPtr& pose_message);
+  void TargetPosCallback(TargetPosPtr& pose_message);
   void OpticalFlowCallback(OpticalFlowPtr& opticalFlow_msg);
   void send_mavlink_message(const mavlink_message_t *message, const int destination_port=0);
   void handle_message(mavlink_message_t *msg);
@@ -186,6 +192,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
   transport::SubscriberPtr lidar_sub_;
   transport::SubscriberPtr sonar_sub_;
   transport::SubscriberPtr landingTarget_sub_;
+  transport::SubscriberPtr targetPos_sub_;
   transport::SubscriberPtr opticalFlow_sub_;
   transport::PublisherPtr gps_pub_;
   std::string imu_sub_topic_;
@@ -194,6 +201,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
   std::string sonar_sub_topic_;
 
   std::string landingTarget_sub_topic_;
+  std::string targetPos_sub_topic_;
   common::Time last_time_;
   common::Time last_gps_time_;
   common::Time last_ev_time_;

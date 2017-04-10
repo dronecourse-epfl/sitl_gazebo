@@ -59,7 +59,7 @@ void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     focal_length_ = image_width2_ / tan(hfov2_);
     period_s_ = 1.0f / camera_sensor->UpdateRate();
     // add callback to camera
-    newFrameConnection_ = camera->ConnectNewImageFrame(boost::bind(&TargetCameraPlugin::OnNewFrame, this));
+    // newFrameConnection_ = camera->ConnectNewImageFrame(boost::bind(&TargetCameraPlugin::OnNewFrame, this));
   }
   else
   {
@@ -67,8 +67,9 @@ void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     std::cout << "TargetCameraPlugin::Load(..) could not find camera sensor! Using default values;" << std::endl;
     std::cout << "   using model (" << _model->GetName() << ") for camera pose" << std::endl;
     // add callback for world update
-    updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&TargetCameraPlugin::OnUpdate, this, _1));
   }
+
+  updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&TargetCameraPlugin::OnUpdate, this, _1));
 
   // Find targets listed in sdf tag <target_link>
   FindTargets(_sdf);
@@ -76,12 +77,14 @@ void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   // Load detection parameters
   FindDetectionParameters(_sdf);
 
+  gimbal_.FindJoint(_sdf, _model, GIMBAL_JOINT);
+
   // connection to publish pose over google proto buf
   node_handle_ = transport::NodePtr(new transport::Node());
   node_handle_->Init();
 
-  std::string topicName = "~/" + _model->GetName() + "/LandingTarget";
-  landing_target_pub_ = node_handle_->Advertise<target_camera::msgs::LandingTarget>(topicName, 10);
+  std::string topicName = "~/" + _model->GetName() + "/TargetPos";
+ targetPos_pub_ = node_handle_->Advertise<target_camera::msgs::TargetPositionImage>(topicName, 10);
 }
 
 
@@ -90,6 +93,8 @@ void TargetCameraPlugin::OnUpdate(const common::UpdateInfo& info)
   // Get Delta T
   common::Time current_time = info.simTime;
   double dt = (current_time - last_time_).Double();
+
+  gimbal_.Update(current_time.Double());
 
   if(dt > period_s_)
   {
@@ -127,22 +132,17 @@ void TargetCameraPlugin::OnNewFrame()
     if(pixel_x >= 0 && pixel_x < 2*image_width2_ && pixel_y >= 0 && pixel_y < 2*image_height2_)
     {
       msg.set_time_usec(timestamp_us);
-      msg.set_angle_x(pixel_x);
-      msg.set_angle_y(pixel_y);
-      msg.set_distance(z);
-      msg.set_size_x(2*image_width2_);
-      msg.set_size_y(2*image_height2_);
-      landing_target_pub_->Publish(msg);
-
+      msg.set_x(pixel_x);
+      msg.set_y(pixel_y);
+      msg.set_z(z);
+      msg.set_roll(gimbal_.GetRoll());
+      msg.set_pitch(gimbal_.GetPitch());
+      targetPos_pub_->Publish(msg);
     }
 
     Vector target_vel = msg_it->first->GetWorldLinearVel().Ign();
     SendPositionMsg(msg.target_num(), target_pose.Pos(), target_vel, timestamp_us/1000);
     SendGlobalPositionMsg(msg.target_num(), target_pose, timestamp_us/1000);
-    // Vector camera_vel = camera_link_->GetWorldLinearVel().Ign();
-    // SendPositionMsg(msg.target_num(), camera_pose.Ign().Pos(), camera_vel, timestamp_us/1000);
-    // SendGlobalPositionMsg(msg.target_num(), camera_pose.Ign(), timestamp_us/1000);
-
   }
 
   SendPositionMsg(-1, camera_pose.Pos(),  camera_link_->GetWorldLinearVel().Ign(), timestamp_us/1000);
@@ -201,7 +201,6 @@ int TargetCameraPlugin::FindTargets(const sdf::ElementPtr _sdf)
 
         // create new entry in message_map
         message_map_[target_link].set_target_num(target_num++);
-        message_map_[target_link].set_frame(0);
       }
       else
       {
@@ -293,5 +292,4 @@ bool TargetCameraPlugin::SendGlobalPositionMsg(uint16_t target_id, const Pose& p
   send_mavlink_message(MAVLINK_MSG_ID_GLOBAL_POSITION_INT, &msg, target_id + 100, 200);
 
 }
-
 }

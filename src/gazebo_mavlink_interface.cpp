@@ -92,10 +92,16 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   getSdfParam<std::string>(_sdf, "lidarSubTopic", lidar_sub_topic_, lidar_sub_topic_);
   getSdfParam<std::string>(_sdf, "opticalFlowSubTopic",
       opticalFlow_sub_topic_, opticalFlow_sub_topic_);
+<<<<<<< HEAD
   getSdfParam<std::string>(_sdf, "sonarSubTopic", sonar_sub_topic_, sonar_sub_topic_);
   getSdfParam<std::string>(_sdf, "landingTargetSubTopic",
       landingTarget_sub_topic_, landingTarget_sub_topic_);
       
+=======
+  getSdfParam<std::string>(_sdf, "TargetPosSubTopic",
+      targetPos_sub_topic_, targetPos_sub_topic_);
+
+>>>>>>> Dronecourse: Added Gimbal
   // set input_reference_ from inputs.control
   input_reference_.resize(n_out_max);
   joints_.resize(n_out_max);
@@ -430,7 +436,7 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   // Subscriber to IMU sensor_msgs::Imu Message and SITL message
   imu_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + imu_sub_topic_, &GazeboMavlinkInterface::ImuCallback, this);
   lidar_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + lidar_sub_topic_, &GazeboMavlinkInterface::LidarCallback, this);
-  landingTarget_sub_ = node_handle_->Subscribe("~/" + _model->GetName() + landingTarget_sub_topic_,  &GazeboMavlinkInterface::LandingTargetCallback, this);
+  targetPos_sub_ = node_handle_->Subscribe("~/" + _model->GetName() + targetPos_sub_topic_,  &GazeboMavlinkInterface::TargetPosCallback, this);
   opticalFlow_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + opticalFlow_sub_topic_, &GazeboMavlinkInterface::OpticalFlowCallback, this);
   sonar_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + sonar_sub_topic_, &GazeboMavlinkInterface::SonarCallback, this);
 
@@ -831,19 +837,17 @@ void GazeboMavlinkInterface::LidarCallback(LidarPtr& lidar_message) {
 }
 
 
-void GazeboMavlinkInterface::LandingTargetCallback(LandingTargetPtr& landingTarget_msg)
+void GazeboMavlinkInterface::TargetPosCallback(TargetPosPtr& _target_msg)
 {
-  mavlink_landing_target_t target_msg;
-  target_msg.time_usec = landingTarget_msg->time_usec();
-  target_msg.target_num = landingTarget_msg->target_num();
-  target_msg.frame = MAV_FRAME_BODY_NED;
-  target_msg.angle_x = landingTarget_msg->angle_x();
-  target_msg.angle_y = landingTarget_msg->angle_y();
-  target_msg.distance = landingTarget_msg->distance();
-  target_msg.size_x = landingTarget_msg->size_x();
-  target_msg.size_y = landingTarget_msg->size_y();
-
-  send_mavlink_message(MAVLINK_MSG_ID_LANDING_TARGET, &target_msg, 200);
+  mavlink_target_position_image_t target_msg;
+  target_msg.x = _target_msg->x();
+  target_msg.y = _target_msg->y();
+  target_msg.z = _target_msg->z();
+  target_msg.pitch = _target_msg->pitch();
+  target_msg.roll = _target_msg->roll();
+  target_msg.target_num = _target_msg->target_num();
+  
+  send_mavlink_message(MAVLINK_MSG_ID_TARGET_POSITION_IMAGE, &target_msg, 200);
 }
 
 void GazeboMavlinkInterface::OpticalFlowCallback(OpticalFlowPtr& opticalFlow_message) {

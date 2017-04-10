@@ -11,7 +11,7 @@ const GazeboTruckPlugin::Vector GazeboTruckPlugin::UP(0.0f, 0.0f, 1.0f);
 
 GazeboTruckPlugin::GazeboTruckPlugin() :
   ModelPlugin(),
-  _radius(20),
+  _radius(30),
   _yaw_rate(0),
   _track_section(0),
   _speed(0),
@@ -247,7 +247,8 @@ void GazeboTruckPlugin::update_control(const Pose& pose, float yaw_r)
 
 int GazeboTruckPlugin::choose_binary(int a, int b)
 {
-  return math::Rand::GetIntUniform(0,1) ? a : b;
+  return a;
+  // return math::Rand::GetIntUniform(0,1) ? a : b;
 }
 
 }
