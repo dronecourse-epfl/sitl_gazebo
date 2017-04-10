@@ -10,7 +10,7 @@
     </include>
     <include>
       <uri>model://dronecourse_arena</uri>
-      <pose frame=''>20 0 0 0 0 0</pose>
+      <pose frame=''>30 0 0 0 0 0</pose>
     </include>
     <include>
       <uri>model://dronecourse</uri>

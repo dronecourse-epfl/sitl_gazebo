@@ -4,32 +4,34 @@
 #include "gazebo_mavlink_plugin.h"
 #include <gazebo/physics/physics.hh>
 #include "gazebo/gazebo.hh"
-#include "LandingTarget.pb.h"
+#include "TargetPositionImage.pb.h"
+#include "gazebo_gimbal.hpp"
 
 
 namespace gazebo
 {
-
   class TargetCameraPlugin : public GazeboMavlinkPlugin
   {
-    // Default camera parameters (values defined after class definition)
-    const static float HFOV_DEFAULT_;                // default horizontal field of view [rad]
-    const static unsigned int IMAGE_WIDTH_DEFAULT_;  // default image width [pixel]
-    const static unsigned int IMAGE_HEIGHT_DEFAULT_; // default image height [pixel]
-    const static float UPDATE_RATE_DEFAULT_;         // default update rate of the camera [Hz]
-    const static float NOISE_XY_STD_DEFAULT_;        // default standard deviation of noise in xy [pix^2]
-    const static float NOISE_Z_STD_DEFAULT_;        // default standard deviation of noise in z [m^2]
-
-    // SDF parameter names (values defined after class definition)
-    const static std::string TARGET_LINK;
-    const static std::string NOISE_XY_STD_NAME;
-    const static std::string NOISE_Z_STD_NAME;
-
-    typedef ignition::math::Vector3d Vector;
-    typedef ignition::math::Pose3d Pose;
-
     public:
-      typedef target_camera::msgs::LandingTarget TargetMsg;
+      // Default camera parameters (values defined after class definition)
+      const static float HFOV_DEFAULT_;                // default horizontal field of view [rad]
+      const static unsigned int IMAGE_WIDTH_DEFAULT_;  // default image width [pixel]
+      const static unsigned int IMAGE_HEIGHT_DEFAULT_; // default image height [pixel]
+      const static float UPDATE_RATE_DEFAULT_;         // default update rate of the camera [Hz]
+      const static float NOISE_XY_STD_DEFAULT_;        // default standard deviation of noise in xy [pix^2]
+      const static float NOISE_Z_STD_DEFAULT_;        // default standard deviation of noise in z [m^2]
+
+      // SDF parameter names (values defined after class definition)
+      const static std::string TARGET_LINK;
+      const static std::string GIMBAL_JOINT;
+      const static std::string NOISE_XY_STD_NAME;
+      const static std::string NOISE_Z_STD_NAME;
+
+      typedef ignition::math::Vector3d Vector;
+      typedef ignition::math::Pose3d Pose;
+
+    
+      typedef target_camera::msgs::TargetPositionImage TargetMsg;
 
 
     	TargetCameraPlugin();
@@ -75,11 +77,13 @@ namespace gazebo
       std::map<physics::EntityPtr, TargetMsg> message_map_;  // Map containing target models and messages for each model
       event::ConnectionPtr updateConnection_;               // 
       event::ConnectionPtr newFrameConnection_;      // connection between OnNewFrame and camera, triggers OnNewFrame
-      transport::PublisherPtr landing_target_pub_;
+      transport::PublisherPtr targetPos_pub_;
       transport::NodePtr node_handle_;
 
       float noise_xy_std_;           // Standard deviation of noise in xy (pixels^2)
       float noise_z_std_;            // Standard deviation of noise in z (meters^2)
+
+      Gimbal gimbal_;
   };
 
   // Default camera parameters
@@ -93,6 +97,7 @@ namespace gazebo
 
   // SDF parameter names
   const std::string TargetCameraPlugin::TARGET_LINK = "target_link";
+  const std::string TargetCameraPlugin::GIMBAL_JOINT = "gimbal_joint";
   const std::string TargetCameraPlugin::NOISE_XY_STD_NAME = "noise_xy";
   const std::string TargetCameraPlugin::NOISE_Z_STD_NAME = "noise_z";
 

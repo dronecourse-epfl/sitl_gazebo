@@ -174,7 +174,7 @@ set (msgs
   msgs/CommandMotorSpeed.proto
   msgs/MotorSpeed.proto
   msgs/Wind.proto
-  msgs/LandingTarget.proto
+  msgs/TargetPositionImage.proto
 )
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
 add_library(mav_msgs SHARED ${PROTO_SRCS})
@@ -203,7 +203,7 @@ add_library(rotors_gazebo_mavlink_interface SHARED src/gazebo_mavlink_interface.
 add_library(rotors_gazebo_wind_plugin SHARED src/gazebo_wind_plugin.cpp)
 add_library(gazebo_geotagged_images_plugin SHARED src/gazebo_geotagged_images_plugin.cpp)
 add_library(gazebo_truck_plugin SHARED src/gazebo_truck_plugin.cpp)
-add_library(gazebo_target_camera_plugin SHARED src/gazebo_target_camera_plugin.cpp src/gazebo_mavlink_plugin.cpp)
+add_library(gazebo_target_camera_plugin SHARED src/gazebo_target_camera_plugin.cpp src/gazebo_mavlink_plugin.cpp src/gazebo_gimbal.cpp)
 
 set(plugins
   rotors_gazebo_controller_interface
