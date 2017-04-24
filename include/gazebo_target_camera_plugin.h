@@ -23,7 +23,6 @@ namespace gazebo
 
       // SDF parameter names (values defined after class definition)
       const static std::string TARGET_LINK;
-      const static std::string GIMBAL_JOINT;
       const static std::string NOISE_XY_STD_NAME;
       const static std::string NOISE_Z_STD_NAME;
 
@@ -97,7 +96,6 @@ namespace gazebo
 
   // SDF parameter names
   const std::string TargetCameraPlugin::TARGET_LINK = "target_link";
-  const std::string TargetCameraPlugin::GIMBAL_JOINT = "gimbal_joint";
   const std::string TargetCameraPlugin::NOISE_XY_STD_NAME = "noise_xy";
   const std::string TargetCameraPlugin::NOISE_Z_STD_NAME = "noise_z";
 

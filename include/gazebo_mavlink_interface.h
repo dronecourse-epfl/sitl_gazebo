@@ -38,6 +38,7 @@
 #include "sonarSens.pb.h"
 #include "LandingTarget.pb.h"
 #include "TargetPositionImage.pb.h"
+#include "GimbalCommand.pb.h"
 
 #include <boost/bind.hpp>
 
@@ -50,6 +51,8 @@
 // TODO use mavlink 2.0
 // #include "mavlink/v2.0/common/mavlink.h"
 #include "mavlink/v1.0/dronecourse/mavlink.h"
+// #include "mavlink/v1.0/common/mavlink.h"
+// #include "mavlink/v1.0/dronecourse/mavlink_msg_target_position_image.h"
 
 #include "gazebo/math/Vector3.hh"
 #include <sys/socket.h>
@@ -72,6 +75,7 @@ static const std::string kDefaultNamespace = "";
 // This just proxies the motor commands from command/motor_speed to the single motors via internal
 // ConsPtr passing, such that the original commands don't have to go n_motors-times over the wire.
 static const std::string kDefaultMotorVelocityReferencePubTopic = "/gazebo/command/motor_speed";
+static const std::string kDefaultGimbalCommandPubTopic = "/gazebo/command/gimbal_command";
 
 static const std::string kDefaultImuTopic = "/imu";
 static const std::string kDefaultLidarTopic = "/lidar/link/lidar";
@@ -88,6 +92,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
         received_first_referenc_(false),
         namespace_(kDefaultNamespace),
         motor_velocity_reference_pub_topic_(kDefaultMotorVelocityReferencePubTopic),
+        gimbal_command_pub_topic_(kDefaultGimbalCommandPubTopic),
         imu_sub_topic_(kDefaultImuTopic),
         opticalFlow_sub_topic_(kDefaultOpticalFlowTopic),
         lidar_sub_topic_(kDefaultLidarTopic),
@@ -127,11 +132,13 @@ class GazeboMavlinkInterface : public ModelPlugin {
 
   std::string namespace_;
   std::string motor_velocity_reference_pub_topic_;
+  std::string gimbal_command_pub_topic_;
   std::string mavlink_control_sub_topic_;
   std::string link_name_;
 
   transport::NodePtr node_handle_;
   transport::PublisherPtr motor_velocity_reference_pub_;
+  transport::PublisherPtr gimbal_command_pub_;
   transport::SubscriberPtr mav_control_sub_;
 
   physics::ModelPtr model_;

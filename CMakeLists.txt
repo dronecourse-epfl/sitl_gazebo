@@ -185,6 +185,7 @@ set (msgs
   msgs/sonarSens.proto
   msgs/LandingTarget.proto
   msgs/TargetPositionImage.proto
+  msgs/GimbalCommand.proto
 )
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
 add_library(mav_msgs SHARED ${PROTO_SRCS})

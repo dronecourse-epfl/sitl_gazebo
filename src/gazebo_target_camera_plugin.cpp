@@ -77,14 +77,14 @@ void TargetCameraPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   // Load detection parameters
   FindDetectionParameters(_sdf);
 
-  gimbal_.FindJoint(_sdf, _model, GIMBAL_JOINT);
+  gimbal_.Load(_sdf, _model);
 
   // connection to publish pose over google proto buf
   node_handle_ = transport::NodePtr(new transport::Node());
   node_handle_->Init();
 
   std::string topicName = "~/" + _model->GetName() + "/TargetPos";
- targetPos_pub_ = node_handle_->Advertise<target_camera::msgs::TargetPositionImage>(topicName, 10);
+  targetPos_pub_ = node_handle_->Advertise<target_camera::msgs::TargetPositionImage>(topicName, 10);
 }
 
 
@@ -120,8 +120,8 @@ void TargetCameraPlugin::OnNewFrame()
     const Pose& target_pose = msg_it->first->GetWorldPose().Ign();
     const Vector rel_pos = (target_pose - camera_pose).Pos();
 
-    float pixel_x = round((focal_length_ * rel_pos.Y()/rel_pos.Z()) + image_width2_); // column
-    float pixel_y = round((focal_length_ * rel_pos.X()/rel_pos.Z()) + image_height2_); // row
+    float pixel_x = round(-(focal_length_ * rel_pos.Y()/rel_pos.X()) + image_width2_); // column
+    float pixel_y = round(-(focal_length_ * rel_pos.Z()/rel_pos.X()) + image_height2_); // row
     float z = abs(rel_pos.Length());
 
     // add noise
@@ -134,7 +134,7 @@ void TargetCameraPlugin::OnNewFrame()
       msg.set_time_usec(timestamp_us);
       msg.set_x(pixel_x);
       msg.set_y(pixel_y);
-      msg.set_z(z);
+      msg.set_dist(z);
       msg.set_roll(gimbal_.GetRoll());
       msg.set_pitch(gimbal_.GetPitch());
       targetPos_pub_->Publish(msg);
