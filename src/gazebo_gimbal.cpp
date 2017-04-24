@@ -4,6 +4,9 @@
 
 namespace gazebo {
 
+const std::string Gimbal::GIMBAL_JOINT = "gimbal_joint";
+
+
 float SmallAngle(float angle)
 {
   while(angle > M_PI)
@@ -20,6 +23,7 @@ float SmallAngle(float angle)
 }
 
 Gimbal::Gimbal() :
+  gimbal_command_sub_topic_(kDefaultGimbalCommandSubTopic),
   pos_pid_pitch_(PID(10,0.1,0.001,10)),
   pos_pid_roll_(PID(10,0.001,0.001,10)),
   vel_pid_pitch_(PID(50.0f,0.1f,0.1f, 50.0f)),
@@ -31,11 +35,21 @@ Gimbal::Gimbal() :
   is_initialized_ = false;
 }
 
-void Gimbal::FindJoint(const sdf::ElementPtr _sdf, const physics::ModelPtr model,  const std::string& param_name)
+
+void Gimbal::Load(const sdf::ElementPtr _sdf, const physics::ModelPtr model)
 {
-    if(_sdf->HasElement(param_name))
+  // connection to publish pose over google proto buf
+  node_handle_ = transport::NodePtr(new transport::Node());
+  node_handle_->Init();
+  gimbal_command_sub_ = node_handle_->Subscribe("~/" + model->GetName() + gimbal_command_sub_topic_,  &Gimbal::GimbalCommandCallback, this);
+  FindJoint(_sdf, model);
+}
+
+void Gimbal::FindJoint(const sdf::ElementPtr _sdf, const physics::ModelPtr model)
+{
+    if(_sdf->HasElement(GIMBAL_JOINT))
     {
-      std::string joint_name = _sdf->GetElement(param_name)->Get<std::string>();
+      std::string joint_name = _sdf->GetElement(GIMBAL_JOINT)->Get<std::string>();
       joint_ = model->GetJoint(joint_name);
       
       if(joint_ != NULL)
@@ -43,6 +57,13 @@ void Gimbal::FindJoint(const sdf::ElementPtr _sdf, const physics::ModelPtr model
         child_ = joint_->GetChild();
       }
     }
+}
+
+void Gimbal::GimbalCommandCallback(GimbalCommandPtr& msg)
+{
+  float pitch = msg->pitch();
+  float roll = msg->roll();
+  SetCmd(pitch, roll);
 }
 
 

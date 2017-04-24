@@ -175,6 +175,7 @@ set (msgs
   msgs/MotorSpeed.proto
   msgs/Wind.proto
   msgs/TargetPositionImage.proto
+  msgs/GimbalCommand.proto
 )
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
 add_library(mav_msgs SHARED ${PROTO_SRCS})

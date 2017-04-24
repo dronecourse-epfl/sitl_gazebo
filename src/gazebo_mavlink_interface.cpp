@@ -405,11 +405,11 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   imu_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + imu_sub_topic_, &GazeboMavlinkInterface::ImuCallback, this);
   lidar_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + lidar_sub_topic_, &GazeboMavlinkInterface::LidarCallback, this);
   targetPos_sub_ = node_handle_->Subscribe("~/" + _model->GetName() + targetPos_sub_topic_,  &GazeboMavlinkInterface::TargetPosCallback, this);
-  opticalFlow_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + opticalFlow_sub_topic_, &GazeboMavlinkInterface::OpticalFlowCallback, this);
   
   // Publish gazebo's motor_speed message
   motor_velocity_reference_pub_ = node_handle_->Advertise<mav_msgs::msgs::CommandMotorSpeed>("~/" + model_->GetName() + motor_velocity_reference_pub_topic_, 1);
-
+  gimbal_command_pub_ = node_handle_->Advertise<target_camera::msgs::GimbalCommand>("~/" + model_->GetName() + gimbal_command_pub_topic_, 1);
+  std::cout << "PUB: " << "~/" + model_->GetName() + gimbal_command_pub_topic_ << std::endl;
   _rotor_count = 5;
   last_time_ = world_->GetSimTime();
   last_gps_time_ = world_->GetSimTime();
@@ -778,7 +778,7 @@ void GazeboMavlinkInterface::TargetPosCallback(TargetPosPtr& _target_msg)
   mavlink_target_position_image_t target_msg;
   target_msg.x = _target_msg->x();
   target_msg.y = _target_msg->y();
-  target_msg.z = _target_msg->z();
+  target_msg.dist = _target_msg->dist();
   target_msg.pitch = _target_msg->pitch();
   target_msg.roll = _target_msg->roll();
   target_msg.target_num = _target_msg->target_num();
@@ -854,7 +854,7 @@ void GazeboMavlinkInterface::handle_message(mavlink_message_t *msg)
 {
   switch(msg->msgid) {
   case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
-    mavlink_hil_actuator_controls_t controls;
+  { mavlink_hil_actuator_controls_t controls;
     mavlink_msg_hil_actuator_controls_decode(msg, &controls);
     bool armed = false;
 
@@ -882,6 +882,16 @@ void GazeboMavlinkInterface::handle_message(mavlink_message_t *msg)
     }
 
     received_first_referenc_ = true;
+  }
+    break;
+
+  case MAVLINK_MSG_ID_GIMBAL_COMMAND:
+    mavlink_gimbal_command_t gimbal_msg_mav;
+    mavlink_msg_gimbal_command_decode(msg, &gimbal_msg_mav);
+    target_camera::msgs::GimbalCommand gimbal_msg;
+    gimbal_msg.set_roll(gimbal_msg_mav.roll);
+    gimbal_msg.set_pitch(gimbal_msg_mav.pitch);
+    gimbal_command_pub_->Publish(gimbal_msg);
     break;
   }
 }

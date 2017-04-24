@@ -1,8 +1,17 @@
+#ifndef _GAZEBO_GIMBAL_HH_
+#define _GAZEBO_GIMBAL_HH_
+
+
 #include <gazebo/gazebo.hh>
+#include "GimbalCommand.pb.h"
+
 
 namespace gazebo
 {
 
+  static const std::string kDefaultGimbalCommandSubTopic = "/gazebo/command/gimbal_command";
+  typedef const boost::shared_ptr<const target_camera::msgs::GimbalCommand> GimbalCommandPtr;
+  
   class PID
   {
   public:
@@ -55,6 +64,7 @@ namespace gazebo
       return out;
     };
 
+
   private:
     float kp_;
     float ki_;
@@ -69,12 +79,12 @@ namespace gazebo
   class Gimbal
   {
   public:
+    const static std::string GIMBAL_JOINT;
 
     Gimbal();
 
-    void Find(physics::ModelPtr _model, sdf::ElementPtr _sdf);
+    void Load(const sdf::ElementPtr _sdf, const physics::ModelPtr _model);
 
-    void FindJoint(const sdf::ElementPtr _sdf, const physics::ModelPtr model, const std::string& param_name);
 
     void SetCmd(float pitch, float roll);
 
@@ -84,6 +94,9 @@ namespace gazebo
     void Update(double current_time);
 
   private:
+    transport::SubscriberPtr gimbal_command_sub_;
+    transport::NodePtr node_handle_;
+    std::string gimbal_command_sub_topic_;
     physics::JointPtr joint_;
     physics::LinkPtr child_;
     PID pos_pid_pitch_;
@@ -95,5 +108,10 @@ namespace gazebo
     double cmd_roll_;
     double pitch_;
     double roll_;
+
+    void GimbalCommandCallback(GimbalCommandPtr& msg);
+    void FindJoint(const sdf::ElementPtr _sdf, const physics::ModelPtr model);
   };
 }
+
+#endif /* _GAZEBO_GIMBAL_HH_ */
