@@ -9,12 +9,13 @@ const std::string Gimbal::GIMBAL_JOINT = "gimbal_joint";
 
 float SmallAngle(float angle)
 {
-  while(angle > M_PI)
+
+  angle = fmod(angle, 2*M_PI);
+
+  if(angle > M_PI)
   {
     angle -= 2*M_PI;
-  }
-
-  while(angle <= -M_PI)
+  } else if(angle <= -M_PI)
   {
     angle += 2*M_PI;
   }
@@ -24,12 +25,14 @@ float SmallAngle(float angle)
 
 Gimbal::Gimbal() :
   gimbal_command_sub_topic_(kDefaultGimbalCommandSubTopic),
-  pos_pid_pitch_(PID(10,0.1,0.001,10)),
-  pos_pid_roll_(PID(10,0.001,0.001,10)),
+  pos_pid_pitch_(PID(20,0.1,0.001,10)),
+  pos_pid_roll_(PID(20,0.001,0.001,10)),
   vel_pid_pitch_(PID(50.0f,0.1f,0.1f, 50.0f)),
   vel_pid_roll_(PID(50.0f,0.1f,0.1f, 50.0f)),
   joint_(NULL),
-  child_(NULL)
+  child_(NULL),
+  pitch_(0),
+  roll_(0)
 {
   SetCmd(-M_PI/2.0f,0.0f);
   is_initialized_ = false;
@@ -88,7 +91,6 @@ void Gimbal::Update(double current_time)
     is_initialized_ = true;
     return;
   }
-
 
   pitch_ = joint_->GetAngle(0).Radian();
   math::Quaternion q = math::Quaternion(0,-pitch_,0).GetInverse()*child_->GetRelativePose().rot;
