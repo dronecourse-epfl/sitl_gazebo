@@ -409,7 +409,6 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   // Publish gazebo's motor_speed message
   motor_velocity_reference_pub_ = node_handle_->Advertise<mav_msgs::msgs::CommandMotorSpeed>("~/" + model_->GetName() + motor_velocity_reference_pub_topic_, 1);
   gimbal_command_pub_ = node_handle_->Advertise<target_camera::msgs::GimbalCommand>("~/" + model_->GetName() + gimbal_command_pub_topic_, 1);
-  std::cout << "PUB: " << "~/" + model_->GetName() + gimbal_command_pub_topic_ << std::endl;
   _rotor_count = 5;
   last_time_ = world_->GetSimTime();
   last_gps_time_ = world_->GetSimTime();
