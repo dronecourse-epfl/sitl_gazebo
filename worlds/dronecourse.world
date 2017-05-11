@@ -6,11 +6,11 @@
     </include>
     <include>
       <uri>model://truck</uri>
-      <pose frame=''>0 -20 0 0 0 0</pose>
+      <pose frame=''>0 -50 0 0 0 0</pose>
     </include>
     <include>
       <uri>model://dronecourse_arena</uri>
-      <pose frame=''>30 0 0 0 0 0</pose>
+      <pose frame=''>50 0 0 0 0 0</pose>
     </include>
     <include>
       <uri>model://dronecourse</uri>
