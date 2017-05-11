@@ -36,14 +36,14 @@
 			<field type="uint32_t" name="y">Y Position in pixels frame in meters</field>
 			<field type="float" name="dist"> distance to target meters</field>
 			<field type="float" name="pitch"> Pitch from body to camera frame</field>
-			<field type="float" name="roll"> Roll from body to camera frame</field>
+			<field type="float" name="yaw"> Yaw from body to camera frame</field>
 			<field type="uint8_t" name="target_num">ID of the target object.</field>
 		</message>
 		<message id="153" name="GIMBAL_COMMAND">
 			<description>This message encodes the position of a target in an image </description>
 			<field type="uint64_t" name="time_usec">Timestamp (micros since boot or Unix epoch)</field>
 			<field type="float" name="pitch"> Pitch from body to camera frame</field>
-			<field type="float" name="roll"> Roll from body to camera frame</field>
+			<field type="float" name="yaw"> Yaw from body to camera frame</field>
 		</message>
 	</messages>
 </mavlink>
