@@ -3,6 +3,7 @@ package target_camera.msgs;
 
 message GimbalCommand
 {
-  required float roll  = 1;
-  required float pitch = 2;
+  required float pitch = 1;
+  required float yaw   = 2;
+
 }

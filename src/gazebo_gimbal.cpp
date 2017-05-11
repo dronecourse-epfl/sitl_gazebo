@@ -6,36 +6,12 @@ namespace gazebo {
 
 const std::string Gimbal::GIMBAL_JOINT = "gimbal_joint";
 
-
-float SmallAngle(float angle)
-{
-
-  angle = fmod(angle, 2*M_PI);
-
-  if(angle > M_PI)
-  {
-    angle -= 2*M_PI;
-  } else if(angle <= -M_PI)
-  {
-    angle += 2*M_PI;
-  }
-
-  return angle;
-}
-
 Gimbal::Gimbal() :
-  gimbal_command_sub_topic_(kDefaultGimbalCommandSubTopic),
-  pos_pid_pitch_(PID(20,0.1,0.001,10)),
-  pos_pid_roll_(PID(20,0.001,0.001,10)),
-  vel_pid_pitch_(PID(50.0f,0.1f,0.1f, 50.0f)),
-  vel_pid_roll_(PID(50.0f,0.1f,0.1f, 50.0f)),
-  joint_(NULL),
   child_(NULL),
   pitch_(0),
-  roll_(0)
+  yaw_(0)
 {
   SetCmd(-M_PI/2.0f,0.0f);
-  is_initialized_ = false;
 }
 
 
@@ -53,11 +29,11 @@ void Gimbal::FindJoint(const sdf::ElementPtr _sdf, const physics::ModelPtr model
     if(_sdf->HasElement(GIMBAL_JOINT))
     {
       std::string joint_name = _sdf->GetElement(GIMBAL_JOINT)->Get<std::string>();
-      joint_ = model->GetJoint(joint_name);
+      physics::JointPtr joint = model->GetJoint(joint_name);
       
-      if(joint_ != NULL)
+      if(joint != NULL)
       {
-        child_ = joint_->GetChild();
+        child_ = joint->GetChild();
       }
     }
 }
@@ -65,45 +41,29 @@ void Gimbal::FindJoint(const sdf::ElementPtr _sdf, const physics::ModelPtr model
 void Gimbal::GimbalCommandCallback(GimbalCommandPtr& msg)
 {
   float pitch = msg->pitch();
-  float roll = msg->roll();
-  SetCmd(pitch, roll);
+  float yaw = msg->yaw();
+  SetCmd(pitch, yaw);
 }
 
 
-void Gimbal::SetCmd(float pitch, float roll)
+void Gimbal::SetCmd(float pitch, float yaw)
 {
   cmd_pitch_ = pitch;
-  cmd_roll_ = roll;
+  cmd_yaw_ = yaw;
 }
 
 void Gimbal::Update(double current_time)
 {
-  if(joint_ == NULL || child_ == NULL)
+  if(child_ == NULL)
   {
     return;
   }
 
-  if(!is_initialized_){
-    pos_pid_pitch_.reset(current_time);
-    pos_pid_roll_.reset(current_time);
-    vel_pid_pitch_.reset(current_time);
-    vel_pid_roll_.reset(current_time);
-    is_initialized_ = true;
-    return;
-  }
+  const math::Pose pose(0,0,0,0,-cmd_pitch_,-cmd_yaw_);
+  child_->SetRelativePose(pose);
 
-  pitch_ = joint_->GetAngle(0).Radian();
-  math::Quaternion q = math::Quaternion(0,-pitch_,0).GetInverse()*child_->GetRelativePose().rot;
-  roll_ = q.GetRoll();
-  
-  float vel_cmd = pos_pid_pitch_.Update(current_time, SmallAngle(cmd_pitch_ - pitch_));
-  float force_cmd = vel_pid_pitch_.Update(current_time, vel_cmd - joint_->GetVelocity(0));
-  joint_->SetForce(0,force_cmd*1e-9);
-
-  float vel_roll_ = joint_->GetVelocity(1);
-  vel_cmd = -pos_pid_roll_.Update(current_time, SmallAngle(cmd_roll_ - roll_));
-  force_cmd = vel_pid_roll_.Update(current_time, (vel_cmd - vel_roll_));
-  joint_->SetForce(1,force_cmd*1e-9);
+  pitch_ = cmd_pitch_;
+  yaw_ = cmd_yaw_;
 }
 
 }

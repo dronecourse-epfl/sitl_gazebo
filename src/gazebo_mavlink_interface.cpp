@@ -779,7 +779,7 @@ void GazeboMavlinkInterface::TargetPosCallback(TargetPosPtr& _target_msg)
   target_msg.y = _target_msg->y();
   target_msg.dist = _target_msg->dist();
   target_msg.pitch = _target_msg->pitch();
-  target_msg.roll = _target_msg->roll();
+  target_msg.yaw = _target_msg->yaw();
   target_msg.target_num = _target_msg->target_num();
   
   send_mavlink_message(MAVLINK_MSG_ID_TARGET_POSITION_IMAGE, &target_msg, 200);
@@ -888,8 +888,8 @@ void GazeboMavlinkInterface::handle_message(mavlink_message_t *msg)
     mavlink_gimbal_command_t gimbal_msg_mav;
     mavlink_msg_gimbal_command_decode(msg, &gimbal_msg_mav);
     target_camera::msgs::GimbalCommand gimbal_msg;
-    gimbal_msg.set_roll(gimbal_msg_mav.roll);
     gimbal_msg.set_pitch(gimbal_msg_mav.pitch);
+    gimbal_msg.set_yaw(gimbal_msg_mav.yaw);
     gimbal_command_pub_->Publish(gimbal_msg);
     break;
   }

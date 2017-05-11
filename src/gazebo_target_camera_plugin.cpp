@@ -135,8 +135,8 @@ void TargetCameraPlugin::OnNewFrame()
       msg.set_x(pixel_x);
       msg.set_y(pixel_y);
       msg.set_dist(z);
-      msg.set_roll(gimbal_.GetRoll());
       msg.set_pitch(gimbal_.GetPitch());
+      msg.set_yaw(gimbal_.GetYaw());
       targetPos_pub_->Publish(msg);
     }
 
