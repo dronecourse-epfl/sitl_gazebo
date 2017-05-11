@@ -11,7 +11,7 @@ const GazeboTruckPlugin::Vector GazeboTruckPlugin::UP(0.0f, 0.0f, 1.0f);
 
 GazeboTruckPlugin::GazeboTruckPlugin() :
   ModelPlugin(),
-  _radius(30),
+  _radius(50),
   _yaw_rate(0),
   _track_section(0),
   _speed(0),
