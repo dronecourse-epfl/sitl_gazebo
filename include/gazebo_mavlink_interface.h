@@ -35,9 +35,9 @@
 #include "SensorImu.pb.h"
 #include "opticalFlow.pb.h"
 #include "lidar.pb.h"
+#include "sonarSens.pb.h"
 #include "TargetPositionImage.pb.h"
 #include "GimbalCommand.pb.h"
-
 #include <boost/bind.hpp>
 
 #include <iostream>
@@ -47,8 +47,6 @@
 #include <sdf/sdf.hh>
 
 #include "mavlink/v1.0/dronecourse/mavlink.h"
-// #include "mavlink/v1.0/common/mavlink.h"
-// #include "mavlink/v1.0/dronecourse/mavlink_msg_target_position_image.h"
 
 #include "gazebo/math/Vector3.hh"
 #include <sys/socket.h>
@@ -64,8 +62,9 @@ namespace gazebo {
 typedef const boost::shared_ptr<const mav_msgs::msgs::CommandMotorSpeed> CommandMotorSpeedPtr;
 typedef const boost::shared_ptr<const sensor_msgs::msgs::Imu> ImuPtr;
 typedef const boost::shared_ptr<const lidar_msgs::msgs::lidar> LidarPtr;
-typedef const boost::shared_ptr<const target_camera::msgs::TargetPositionImage> TargetPosPtr;
 typedef const boost::shared_ptr<const opticalFlow_msgs::msgs::opticalFlow> OpticalFlowPtr;
+typedef const boost::shared_ptr<const sonarSens_msgs::msgs::sonarSens> SonarSensPtr;
+typedef const boost::shared_ptr<const target_camera::msgs::TargetPositionImage> TargetPosPtr;
 
 // Default values
 static const std::string kDefaultNamespace = "";
@@ -78,7 +77,9 @@ static const std::string kDefaultGimbalCommandPubTopic = "/gazebo/command/gimbal
 static const std::string kDefaultImuTopic = "/imu";
 static const std::string kDefaultLidarTopic = "/lidar/link/lidar";
 static const std::string kDefaultOpticalFlowTopic = "/camera/link/opticalFlow";
+static const std::string kDefaultSonarTopic = "/sonar_model/link/sonar";
 static const std::string kDefaultTargetPosTopic = "/TargetPos";
+
 class GazeboMavlinkInterface : public ModelPlugin {
  public:
   GazeboMavlinkInterface()
@@ -91,6 +92,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
         imu_sub_topic_(kDefaultImuTopic),
         opticalFlow_sub_topic_(kDefaultOpticalFlowTopic),
         lidar_sub_topic_(kDefaultLidarTopic),
+        sonar_sub_topic_(kDefaultSonarTopic),
         targetPos_sub_topic_(kDefaultTargetPosTopic),
         model_{},
         world_(nullptr),
@@ -162,6 +164,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
   void QueueThread();
   void ImuCallback(ImuPtr& imu_msg);
   void LidarCallback(LidarPtr& lidar_msg);
+  void SonarCallback(SonarSensPtr& sonar_msg);
   void TargetPosCallback(TargetPosPtr& pose_message);
   void OpticalFlowCallback(OpticalFlowPtr& opticalFlow_msg);
   void send_mavlink_message(const uint8_t msgid, const void *msg, uint8_t component_ID);
@@ -183,13 +186,16 @@ class GazeboMavlinkInterface : public ModelPlugin {
 
   transport::SubscriberPtr imu_sub_;
   transport::SubscriberPtr lidar_sub_;
+  transport::SubscriberPtr sonar_sub_;
   transport::SubscriberPtr targetPos_sub_;
   transport::SubscriberPtr opticalFlow_sub_;
   transport::PublisherPtr gps_pub_;
   std::string imu_sub_topic_;
   std::string lidar_sub_topic_;
   std::string opticalFlow_sub_topic_;
+  std::string sonar_sub_topic_;
   std::string targetPos_sub_topic_;
+
   common::Time last_time_;
   common::Time last_gps_time_;
   common::Time last_actuator_time_;
@@ -219,6 +225,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
   double optflow_ygyro;
   double optflow_zgyro;
   double optflow_distance;
+  double sonar_distance;
 
   in_addr_t mavlink_addr_;
   int mavlink_udp_port_;

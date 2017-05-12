@@ -1141,6 +1141,22 @@
       </physics>
     </joint>
 
+    <include>
+      <uri>model://sonar</uri>
+    </include>
+    <joint name="sonar_joint" type="revolute">
+      <child>sonar_model::link</child>
+      <parent>typhoon_h480::base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <upper>0</upper>
+          <lower>0</lower>
+        </limit>
+      </axis>
+    </joint>
+  
+
     <plugin name='rosbag' filename='librotors_gazebo_multirotor_base_plugin.so'>
       <robotNamespace></robotNamespace>
       <linkName>base_link</linkName>
@@ -1462,7 +1478,7 @@
         </channel>
         <channel name="gimbal_yaw">
           <input_index>8</input_index>
-          <input_offset>-0.5</input_offset>
+          <input_offset>0</input_offset>
           <input_scaling>-3.1415</input_scaling>
           <zero_position_disarmed>0</zero_position_disarmed>
           <zero_position_armed>0</zero_position_armed>
@@ -1478,13 +1494,13 @@
           <zero_position_armed>0</zero_position_armed>
           <joint_control_type>position</joint_control_type>
           <joint_control_pid>
-            <p>50.0</p>
-            <i>0</i>
+            <p>3.5</p>
+            <i>0.5</i>
             <d>0</d>
-            <iMax>0</iMax>
-            <iMin>0</iMin>
-            <cmdMax>10</cmdMax>
-            <cmdMin>-10</cmdMin>
+            <iMax>4</iMax>
+            <iMin>-4</iMin>
+            <cmdMax>6</cmdMax>
+            <cmdMin>-6</cmdMin>
           </joint_control_pid>
           <joint_name>left_leg_joint</joint_name>
         </channel>
@@ -1496,13 +1512,13 @@
           <zero_position_armed>0</zero_position_armed>
           <joint_control_type>position</joint_control_type>
           <joint_control_pid>
-            <p>50.0</p>
-            <i>0</i>
+            <p>3.5</p>
+            <i>0.5</i>
             <d>0</d>
-            <iMax>0</iMax>
-            <iMin>0</iMin>
-            <cmdMax>10</cmdMax>
-            <cmdMin>-10</cmdMin>
+            <iMax>4</iMax>
+            <iMin>-4</iMin>
+            <cmdMax>6</cmdMax>
+            <cmdMin>-6</cmdMin>
           </joint_control_pid>
           <joint_name>right_leg_joint</joint_name>
         </channel>

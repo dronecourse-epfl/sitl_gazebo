@@ -174,6 +174,7 @@ set (msgs
   msgs/CommandMotorSpeed.proto
   msgs/MotorSpeed.proto
   msgs/Wind.proto
+  msgs/sonarSens.proto
   msgs/TargetPositionImage.proto
   msgs/GimbalCommand.proto
 )
@@ -203,6 +204,7 @@ add_library(gazebo_lidar_plugin SHARED src/gazebo_lidar_plugin.cpp)
 add_library(rotors_gazebo_mavlink_interface SHARED src/gazebo_mavlink_interface.cpp src/geo_mag_declination.cpp)
 add_library(rotors_gazebo_wind_plugin SHARED src/gazebo_wind_plugin.cpp)
 add_library(gazebo_geotagged_images_plugin SHARED src/gazebo_geotagged_images_plugin.cpp)
+add_library(gazebo_sonar_plugin SHARED src/gazebo_sonar_plugin.cpp)
 add_library(gazebo_truck_plugin SHARED src/gazebo_truck_plugin.cpp)
 add_library(gazebo_target_camera_plugin SHARED src/gazebo_target_camera_plugin.cpp src/gazebo_mavlink_plugin.cpp src/gazebo_gimbal.cpp)
 
@@ -217,6 +219,7 @@ set(plugins
   rotors_gazebo_mavlink_interface
   rotors_gazebo_wind_plugin
   gazebo_geotagged_images_plugin
+  gazebo_sonar_plugin
   gazebo_truck_plugin
   )
 
