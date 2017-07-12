@@ -37,6 +37,7 @@ class GazeboTruckPlugin : public ModelPlugin {
   float _pos_bias_rate;
   float _pos_bias_rate_std;
   float _pos_bias_max;
+  int   _rand_trajectory;
   
   event::ConnectionPtr updateConnection_;  // Pointer to the update event connection
 
@@ -48,6 +49,7 @@ class GazeboTruckPlugin : public ModelPlugin {
   const static std::string SPEED_BIAS_RATE_STD;
   const static std::string POS_BIAS_MAX;
   const static std::string POS_BIAS_RATE_STD;
+  const static std::string RAND_TRAJECTORY;
 };
 
 const std::string GazeboTruckPlugin::SPEED_MIN("speed_min");
@@ -55,5 +57,5 @@ const std::string GazeboTruckPlugin::SPEED_MAX("speed_max");
 const std::string GazeboTruckPlugin::SPEED_BIAS_RATE_STD("speed_bias_rate_std");
 const std::string GazeboTruckPlugin::POS_BIAS_MAX("pos_bias_max");
 const std::string GazeboTruckPlugin::POS_BIAS_RATE_STD("pos_bias_rate_std");
-
+const std::string GazeboTruckPlugin::RAND_TRAJECTORY("rand_trajectory");
 }

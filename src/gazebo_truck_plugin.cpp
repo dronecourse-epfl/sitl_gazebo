@@ -43,6 +43,7 @@ void GazeboTruckPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   getSdfParam(_sdf, SPEED_BIAS_RATE_STD, _speed_bias_rate_std, 0.0f, true);
   getSdfParam(_sdf, POS_BIAS_MAX, _pos_bias_max, 0.0f, true);
   getSdfParam(_sdf, POS_BIAS_RATE_STD, _pos_bias_rate_std, 0.0f, true);
+  getSdfParam(_sdf, RAND_TRAJECTORY, _rand_trajectory, 0, true);
 }
 
 // This gets called by the world update start event.
@@ -247,8 +248,11 @@ void GazeboTruckPlugin::update_control(const Pose& pose, float yaw_r)
 
 int GazeboTruckPlugin::choose_binary(int a, int b)
 {
-  return a;
-  // return math::Rand::GetIntUniform(0,1) ? a : b;
+  if(_rand_trajectory > 0){
+    return math::Rand::GetIntUniform(0,1) ? a : b;
+  }else {
+    return a;
+  }
 }
 
 }
