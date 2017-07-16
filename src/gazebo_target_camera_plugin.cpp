@@ -131,13 +131,15 @@ void TargetCameraPlugin::OnNewFrame()
 
     if(pixel_x >= 0 && pixel_x < 2*image_width2_ && pixel_y >= 0 && pixel_y < 2*image_height2_)
     {
-      msg.set_time_usec(timestamp_us);
-      msg.set_x(pixel_x);
-      msg.set_y(pixel_y);
-      msg.set_dist(z);
-      msg.set_pitch(gimbal_.GetPitch());
-      msg.set_yaw(gimbal_.GetYaw());
-      targetPos_pub_->Publish(msg);
+      if(rel_pos.X() > 0){
+        msg.set_time_usec(timestamp_us);
+        msg.set_x(pixel_x);
+        msg.set_y(pixel_y);
+        msg.set_dist(z);
+        msg.set_pitch(gimbal_.GetPitch());
+        msg.set_yaw(gimbal_.GetYaw());
+        targetPos_pub_->Publish(msg);
+      }
     }
 
     Vector target_vel = msg_it->first->GetWorldLinearVel().Ign();
