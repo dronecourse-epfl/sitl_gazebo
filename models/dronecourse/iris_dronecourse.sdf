@@ -53,8 +53,8 @@
     <plugin name='TargetCameraPlugin' filename='libgazebo_target_camera_plugin.so'>
       <target_link>truck::target_platform</target_link>
       <gimbal_joint>gimbal_joint</gimbal_joint>
-      <noise_xy>0</noise_xy>
-      <noise_z>0</noise_z>
+      <noise_xy>4</noise_xy>
+      <noise_z>4</noise_z>
       <mavlink_addr>INADDR_ANY</mavlink_addr>
       <mavlink_udp_port>14580</mavlink_udp_port>
     </plugin>
