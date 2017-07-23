@@ -791,11 +791,14 @@ void GazeboMavlinkInterface::LidarCallback(LidarPtr& lidar_message) {
 void GazeboMavlinkInterface::TargetPosCallback(TargetPosPtr& _target_msg)
 {
   mavlink_target_position_image_t target_msg;
-  target_msg.x = _target_msg->x();
-  target_msg.y = _target_msg->y();
+  target_msg.u = _target_msg->u();
+  target_msg.v = _target_msg->v();
   target_msg.dist = _target_msg->dist();
   target_msg.pitch = _target_msg->pitch();
   target_msg.yaw = _target_msg->yaw();
+  target_msg.var_u = _target_msg->var_u();
+  target_msg.var_v = _target_msg->var_v();
+  target_msg.var_dist = _target_msg->var_dist();
   target_msg.target_num = _target_msg->target_num();
   
   send_mavlink_message(MAVLINK_MSG_ID_TARGET_POSITION_IMAGE, &target_msg, 200);

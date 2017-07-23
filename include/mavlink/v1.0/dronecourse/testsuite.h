@@ -160,16 +160,19 @@ static void mavlink_test_target_position_image(uint8_t system_id, uint8_t compon
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
     mavlink_target_position_image_t packet_in = {
-        93372036854775807ULL,963497880,963498088,129.0,157.0,185.0,89
+        93372036854775807ULL,963497880,963498088,129.0,157.0,185.0,213.0,241.0,269.0,125
     };
     mavlink_target_position_image_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         packet1.time_usec = packet_in.time_usec;
-        packet1.x = packet_in.x;
-        packet1.y = packet_in.y;
+        packet1.u = packet_in.u;
+        packet1.v = packet_in.v;
         packet1.dist = packet_in.dist;
         packet1.pitch = packet_in.pitch;
         packet1.yaw = packet_in.yaw;
+        packet1.var_u = packet_in.var_u;
+        packet1.var_v = packet_in.var_v;
+        packet1.var_dist = packet_in.var_dist;
         packet1.target_num = packet_in.target_num;
         
         
@@ -185,12 +188,12 @@ static void mavlink_test_target_position_image(uint8_t system_id, uint8_t compon
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_target_position_image_pack(system_id, component_id, &msg , packet1.time_usec , packet1.x , packet1.y , packet1.dist , packet1.pitch , packet1.yaw , packet1.target_num );
+    mavlink_msg_target_position_image_pack(system_id, component_id, &msg , packet1.time_usec , packet1.u , packet1.v , packet1.dist , packet1.pitch , packet1.yaw , packet1.var_u , packet1.var_v , packet1.var_dist , packet1.target_num );
     mavlink_msg_target_position_image_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_target_position_image_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.time_usec , packet1.x , packet1.y , packet1.dist , packet1.pitch , packet1.yaw , packet1.target_num );
+    mavlink_msg_target_position_image_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.time_usec , packet1.u , packet1.v , packet1.dist , packet1.pitch , packet1.yaw , packet1.var_u , packet1.var_v , packet1.var_dist , packet1.target_num );
     mavlink_msg_target_position_image_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -203,7 +206,7 @@ static void mavlink_test_target_position_image(uint8_t system_id, uint8_t compon
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-    mavlink_msg_target_position_image_send(MAVLINK_COMM_1 , packet1.time_usec , packet1.x , packet1.y , packet1.dist , packet1.pitch , packet1.yaw , packet1.target_num );
+    mavlink_msg_target_position_image_send(MAVLINK_COMM_1 , packet1.time_usec , packet1.u , packet1.v , packet1.dist , packet1.pitch , packet1.yaw , packet1.var_u , packet1.var_v , packet1.var_dist , packet1.target_num );
     mavlink_msg_target_position_image_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
