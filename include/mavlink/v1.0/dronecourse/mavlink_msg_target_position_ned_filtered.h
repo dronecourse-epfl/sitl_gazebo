@@ -15,8 +15,8 @@ typedef struct __mavlink_target_position_ned_filtered_t {
  float var_y; /*< Y Position variance in NED frame in meters^2*/
  float var_z; /*< Z Position variance in NED frame in meters^2*/
  float var_vx; /*< X Velocity variance in NED frame in (meters/s)^2*/
- float var_vy; /*< X Velocity variance in NED frame in (meters/s)^2*/
- float var_vz; /*< X Velocity variance in NED frame in (meters/s)^2*/
+ float var_vy; /*< Y Velocity variance in NED frame in (meters/s)^2*/
+ float var_vz; /*< Z Velocity variance in NED frame in (meters/s)^2*/
  uint8_t target_num; /*< ID of the target object.*/
 }) mavlink_target_position_ned_filtered_t;
 
@@ -87,8 +87,8 @@ typedef struct __mavlink_target_position_ned_filtered_t {
  * @param var_y Y Position variance in NED frame in meters^2
  * @param var_z Z Position variance in NED frame in meters^2
  * @param var_vx X Velocity variance in NED frame in (meters/s)^2
- * @param var_vy X Velocity variance in NED frame in (meters/s)^2
- * @param var_vz X Velocity variance in NED frame in (meters/s)^2
+ * @param var_vy Y Velocity variance in NED frame in (meters/s)^2
+ * @param var_vz Z Velocity variance in NED frame in (meters/s)^2
  * @param target_num ID of the target object.
  * @return length of the message in bytes (excluding serial stream start sign)
  */
@@ -151,8 +151,8 @@ static inline uint16_t mavlink_msg_target_position_ned_filtered_pack(uint8_t sys
  * @param var_y Y Position variance in NED frame in meters^2
  * @param var_z Z Position variance in NED frame in meters^2
  * @param var_vx X Velocity variance in NED frame in (meters/s)^2
- * @param var_vy X Velocity variance in NED frame in (meters/s)^2
- * @param var_vz X Velocity variance in NED frame in (meters/s)^2
+ * @param var_vy Y Velocity variance in NED frame in (meters/s)^2
+ * @param var_vz Z Velocity variance in NED frame in (meters/s)^2
  * @param target_num ID of the target object.
  * @return length of the message in bytes (excluding serial stream start sign)
  */
@@ -241,8 +241,8 @@ static inline uint16_t mavlink_msg_target_position_ned_filtered_encode_chan(uint
  * @param var_y Y Position variance in NED frame in meters^2
  * @param var_z Z Position variance in NED frame in meters^2
  * @param var_vx X Velocity variance in NED frame in (meters/s)^2
- * @param var_vy X Velocity variance in NED frame in (meters/s)^2
- * @param var_vz X Velocity variance in NED frame in (meters/s)^2
+ * @param var_vy Y Velocity variance in NED frame in (meters/s)^2
+ * @param var_vz Z Velocity variance in NED frame in (meters/s)^2
  * @param target_num ID of the target object.
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
@@ -456,7 +456,7 @@ static inline float mavlink_msg_target_position_ned_filtered_get_var_vx(const ma
 /**
  * @brief Get field var_vy from target_position_ned_filtered message
  *
- * @return X Velocity variance in NED frame in (meters/s)^2
+ * @return Y Velocity variance in NED frame in (meters/s)^2
  */
 static inline float mavlink_msg_target_position_ned_filtered_get_var_vy(const mavlink_message_t* msg)
 {
@@ -466,7 +466,7 @@ static inline float mavlink_msg_target_position_ned_filtered_get_var_vy(const ma
 /**
  * @brief Get field var_vz from target_position_ned_filtered message
  *
- * @return X Velocity variance in NED frame in (meters/s)^2
+ * @return Z Velocity variance in NED frame in (meters/s)^2
  */
 static inline float mavlink_msg_target_position_ned_filtered_get_var_vz(const mavlink_message_t* msg)
 {
