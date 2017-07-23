@@ -133,11 +133,14 @@ void TargetCameraPlugin::OnNewFrame()
     {
       if(rel_pos.X() > 0){
         msg.set_time_usec(timestamp_us);
-        msg.set_x(pixel_x);
-        msg.set_y(pixel_y);
+        msg.set_u(pixel_x);
+        msg.set_v(pixel_y);
         msg.set_dist(z);
         msg.set_pitch(gimbal_.GetPitch());
         msg.set_yaw(gimbal_.GetYaw());
+        msg.set_var_u(noise_xy_std_*noise_xy_std_);
+        msg.set_var_v(noise_xy_std_*noise_xy_std_);
+        msg.set_var_dist(noise_xy_std_*noise_z_std_);
         targetPos_pub_->Publish(msg);
       }
     }
