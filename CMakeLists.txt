@@ -186,6 +186,7 @@ set (msgs
   msgs/LandingTarget.proto
   msgs/TargetPositionImage.proto
   msgs/GimbalCommand.proto
+  platform-proto/platform.proto
 )
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
 add_library(mav_msgs SHARED ${PROTO_SRCS})
@@ -216,6 +217,7 @@ add_library(gazebo_sonar_plugin SHARED src/gazebo_sonar_plugin.cpp)
 add_library(gazebo_uuv_plugin SHARED src/gazebo_uuv_plugin.cpp)
 add_library(gazebo_truck_plugin SHARED src/gazebo_truck_plugin.cpp)
 add_library(gazebo_target_camera_plugin SHARED src/gazebo_target_camera_plugin.cpp src/gazebo_mavlink_plugin.cpp src/gazebo_gimbal.cpp)
+add_library(gazebo_platform_plugin SHARED src/gazebo_platform_plugin.cpp)
 
 set(plugins
   rotors_gazebo_controller_interface
@@ -230,6 +232,7 @@ set(plugins
   gazebo_sonar_plugin
   gazebo_uuv_plugin
   gazebo_truck_plugin
+  gazebo_platform_plugin
   )
 
 # ROS mavlink version not compatible with geotagged images plugin
