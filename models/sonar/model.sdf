@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
- <sdf version="1.4">
+ <sdf version="1.5">
  	<model name="sonar_model">
     <link name="link">
-      <pose>0 0 0 0 0 0</pose>
+      <pose>0 0 0 0 -1.5707 0</pose>
       <inertial>
         <pose>0 0 0 0 0 0</pose>
         <mass>0.000000000000001</mass>
