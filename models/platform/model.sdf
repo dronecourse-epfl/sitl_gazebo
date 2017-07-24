@@ -1,5 +1,5 @@
 <?xml version='1.0'?>
-<sdf version='1.4'>
+<sdf version='1.5'>
 	<model name="platform">
 		<static>true</static>
 		<pose>10 0 0 0 0 0</pose>
@@ -16,10 +16,14 @@
 
 			<visual name='visual'>
 				<geometry>
-					<box>
-						<size>1 1 1</size>
-					</box>
+					<mesh> <uri> file://models/platform/box.dae </uri></mesh> 
 				</geometry>
+				<material>
+					<script>
+						<uri>file://materials/dronecourse.material</uri>
+						<name>dronecourse/platform</name>
+					</script>
+				</material>
 			</visual>
 		</link>
 		<plugin name='Platform' filename='libgazebo_platform_plugin.so'>
