@@ -124,12 +124,10 @@ void TargetCameraPlugin::OnNewFrame()
     float pixel_y = round(-(focal_length_ * rel_pos.Z()/rel_pos.X()) + image_height2_); // row
     float z = abs(rel_pos.Length());
 
-    float noise_z_std = noise_z_std_ * z;
-
     // add noise
     pixel_x += math::Rand::GetDblNormal(0.0, noise_xy_std_);
     pixel_y += math::Rand::GetDblNormal(0.0, noise_xy_std_);
-    z +=       math::Rand::GetDblNormal(0.0, noise_z_std);
+    z +=       math::Rand::GetDblNormal(0.0, noise_z_std_);
 
     if(pixel_x >= 0 && pixel_x < 2*image_width2_ && pixel_y >= 0 && pixel_y < 2*image_height2_)
     {
@@ -142,7 +140,7 @@ void TargetCameraPlugin::OnNewFrame()
         msg.set_yaw(gimbal_.GetYaw());
         msg.set_var_u(noise_xy_std_*noise_xy_std_);
         msg.set_var_v(noise_xy_std_*noise_xy_std_);
-        msg.set_var_dist(noise_z_std*noise_z_std);
+        msg.set_var_dist(noise_xy_std_*noise_z_std_);
         targetPos_pub_->Publish(msg);
       }
     }
