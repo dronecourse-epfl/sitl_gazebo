@@ -95,6 +95,8 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   getSdfParam<std::string>(_sdf, "sonarSubTopic", sonar_sub_topic_, sonar_sub_topic_);
   getSdfParam<std::string>(_sdf, "TargetPosSubTopic",
       targetPos_sub_topic_, targetPos_sub_topic_);
+  getSdfParam<std::string>(_sdf, "PlatformLandingSubTopic",
+      platform_landing_sub_topic_, platform_landing_sub_topic_);
 
   // set input_reference_ from inputs.control
   input_reference_.resize(n_out_max);
@@ -432,11 +434,12 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   opticalFlow_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + opticalFlow_sub_topic_, &GazeboMavlinkInterface::OpticalFlowCallback, this);
   sonar_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + sonar_sub_topic_, &GazeboMavlinkInterface::SonarCallback, this);
   targetPos_sub_ = node_handle_->Subscribe("~/" + _model->GetName() + targetPos_sub_topic_,  &GazeboMavlinkInterface::TargetPosCallback, this);
+  platform_landing_sub_ = node_handle_->Subscribe(platform_landing_sub_topic_,  &GazeboMavlinkInterface::PlatformLandingCallback, this);
 
   // Publish gazebo's motor_speed message
   motor_velocity_reference_pub_ = node_handle_->Advertise<mav_msgs::msgs::CommandMotorSpeed>("~/" + model_->GetName() + motor_velocity_reference_pub_topic_, 1);
   gimbal_command_pub_ = node_handle_->Advertise<target_camera::msgs::GimbalCommand>("~/" + model_->GetName() + gimbal_command_pub_topic_, 1);
-  
+
   _rotor_count = 5;
   last_time_ = world_->GetSimTime();
   last_gps_time_ = world_->GetSimTime();
@@ -797,8 +800,20 @@ void GazeboMavlinkInterface::TargetPosCallback(TargetPosPtr& _target_msg)
   target_msg.pitch = _target_msg->pitch();
   target_msg.yaw = _target_msg->yaw();
   target_msg.target_num = _target_msg->target_num();
-  
+
   send_mavlink_message(MAVLINK_MSG_ID_TARGET_POSITION_IMAGE, &target_msg, 200);
+}
+
+void GazeboMavlinkInterface::PlatformLandingCallback(PlatformLandingPtr& _platform_landing_msg)
+{
+  mavlink_platform_landing_t platform_landing_msg;
+  platform_landing_msg.time_usec = _platform_landing_msg->time_msec();
+  platform_landing_msg.vx = _platform_landing_msg->vx();
+  platform_landing_msg.vy = _platform_landing_msg->vy();
+  platform_landing_msg.vz = _platform_landing_msg->vz();
+  platform_landing_msg.contact = _platform_landing_msg->contact();
+
+  send_mavlink_message(MAVLINK_MSG_ID_PLATFORM_LANDING, &platform_landing_msg, 200);
 }
 
 void GazeboMavlinkInterface::OpticalFlowCallback(OpticalFlowPtr& opticalFlow_message) {

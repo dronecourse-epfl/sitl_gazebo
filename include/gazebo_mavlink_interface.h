@@ -38,6 +38,7 @@
 #include "sonarSens.pb.h"
 #include "TargetPositionImage.pb.h"
 #include "GimbalCommand.pb.h"
+#include "platformLanding.pb.h"
 #include <boost/bind.hpp>
 
 #include <iostream>
@@ -65,6 +66,7 @@ typedef const boost::shared_ptr<const lidar_msgs::msgs::lidar> LidarPtr;
 typedef const boost::shared_ptr<const opticalFlow_msgs::msgs::opticalFlow> OpticalFlowPtr;
 typedef const boost::shared_ptr<const sonarSens_msgs::msgs::sonarSens> SonarSensPtr;
 typedef const boost::shared_ptr<const target_camera::msgs::TargetPositionImage> TargetPosPtr;
+typedef const boost::shared_ptr<const platform_msgs::msgs::PlatformLanding> PlatformLandingPtr;
 
 // Default values
 static const std::string kDefaultNamespace = "";
@@ -79,6 +81,7 @@ static const std::string kDefaultLidarTopic = "/lidar/link/lidar";
 static const std::string kDefaultOpticalFlowTopic = "/camera/link/opticalFlow";
 static const std::string kDefaultSonarTopic = "/sonar_model/link/sonar";
 static const std::string kDefaultTargetPosTopic = "/TargetPos";
+static const std::string kDefaultPlatformLandingTopic = "~/platform/landing";
 
 class GazeboMavlinkInterface : public ModelPlugin {
  public:
@@ -94,6 +97,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
         lidar_sub_topic_(kDefaultLidarTopic),
         sonar_sub_topic_(kDefaultSonarTopic),
         targetPos_sub_topic_(kDefaultTargetPosTopic),
+        platform_landing_sub_topic_(kDefaultPlatformLandingTopic),
         model_{},
         world_(nullptr),
         left_elevon_joint_(nullptr),
@@ -130,11 +134,13 @@ class GazeboMavlinkInterface : public ModelPlugin {
   std::string gimbal_command_pub_topic_;
   std::string mavlink_control_sub_topic_;
   std::string link_name_;
+  std::string platform_landing_sub_topic_;
 
   transport::NodePtr node_handle_;
   transport::PublisherPtr motor_velocity_reference_pub_;
   transport::PublisherPtr gimbal_command_pub_;
   transport::SubscriberPtr mav_control_sub_;
+  transport::SubscriberPtr platform_landing_sub_;
 
   physics::ModelPtr model_;
   physics::WorldPtr world_;
@@ -166,6 +172,7 @@ class GazeboMavlinkInterface : public ModelPlugin {
   void LidarCallback(LidarPtr& lidar_msg);
   void SonarCallback(SonarSensPtr& sonar_msg);
   void TargetPosCallback(TargetPosPtr& pose_message);
+  void PlatformLandingCallback(PlatformLandingPtr& platform_landing_msg);
   void OpticalFlowCallback(OpticalFlowPtr& opticalFlow_msg);
   void send_mavlink_message(const uint8_t msgid, const void *msg, uint8_t component_ID);
   void handle_message(mavlink_message_t *msg);
