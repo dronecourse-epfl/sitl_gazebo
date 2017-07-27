@@ -178,6 +178,7 @@ set (msgs
   msgs/TargetPositionImage.proto
   msgs/GimbalCommand.proto
   platform-proto/platform.proto
+  platform-proto/platformLanding.proto
 )
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
 add_library(mav_msgs SHARED ${PROTO_SRCS})
