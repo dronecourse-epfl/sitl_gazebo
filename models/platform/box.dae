@@ -5,8 +5,8 @@
       <author>Blender User</author>
       <authoring_tool>Blender 2.78.0 commit date:2017-02-24, commit time:14:33, hash:e92f2352830</authoring_tool>
     </contributor>
-    <created>2017-07-24T14:33:09</created>
-    <modified>2017-07-24T14:33:09</modified>
+    <created>2017-08-08T16:36:41</created>
+    <modified>2017-08-08T16:36:41</modified>
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
@@ -139,7 +139,7 @@
     <geometry id="Cube-mesh" name="Cube">
       <mesh>
         <source id="Cube-mesh-positions">
-          <float_array id="Cube-mesh-positions-array" count="24">0.5 0.5 0 0.5 -0.5 0 -0.5 -0.5 0 -0.5 0.5 0 0.5 0.5 1 0.5 -0.5 1 -0.5 -0.5 1 -0.5 0.5 1</float_array>
+          <float_array id="Cube-mesh-positions-array" count="24">1 1 0 1 -1 0 -1 -1 0 -1 1 0 1 1 1 1 -1 1 -1 -1 1 -1 1 1</float_array>
           <technique_common>
             <accessor source="#Cube-mesh-positions-array" count="8" stride="3">
               <param name="X" type="float"/>
