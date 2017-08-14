@@ -2,9 +2,11 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
 #include "gazebo/msgs/msgs.hh"
+#include "waypoint.pb.h"
 
 namespace gazebo {
 
+typedef const boost::shared_ptr<const waypoint_msgs::msgs::Waypoint> WaypointPtr;
 
 class GazeboWaypointPlugin : public ModelPlugin {
  public:
@@ -36,10 +38,45 @@ class GazeboWaypointPlugin : public ModelPlugin {
   /** Unique name of the visual based on #_no */
   std::string _visual_name;
 
+  /** Pointer to the waypoint topic publisher */
+  transport::PublisherPtr _waypoint_pub;
+  /** Pointer to the waypoint topic subscriber */
+  transport::SubscriberPtr _waypoint_sub;
+  /** Flag is set if this waypoint is active. */
+  bool _active = false;
+  /** Color constant for inactive waypoints */
+  const std::string GAZEBO_COLOR_INACTIVE = "Gazebo/Grey";
+  /** Color constant for active waypoints */
+  const std::string GAZEBO_COLOR_ACTIVE = "Gazebo/Yellow";
+  /** Color constant for validated waypoints */
+  const std::string GAZEBO_COLOR_VALIDATED = "Gazebo/Green";
+  /** Current color of the waypoint */
+  std::string _color = GAZEBO_COLOR_INACTIVE;
+
   /** Change the visual of the waypoint: set its color to the provided
    * color such as "Gazebo/Yellow" and "Gazebo/Green".
    * @param color the new color of the visual
    */
   void UpdateVisual(std::string color);
+  /** Update current color
+   * @param new_color[in] a string such as #GAZEBO_COLOR_ACTIVE.
+   */
+  void SetColor(std::string new_color);
+  /** Update active state
+   * @param active[in] new active state
+   */
+  void SetActive(bool active);
+  /** Update valid state
+   * @param valid[in] new active state
+   */
+  void SetValid(bool valid);
+  /** Send a new waypoint message
+   * @param valid[in] the valid state to be sent
+   */
+  void FireValid(bool valid);
+  /** Callback for waypoint message
+   * @param msg[in] the waypoint message
+   */
+  void OnWaypointUpdate(WaypointPtr &msg);
 };
 }
