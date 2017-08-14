@@ -2,6 +2,7 @@
 #include <gazebo/physics/physics.hh>
 #include "gazebo_waypoint_plugin.h"
 #include <gazebo/msgs/msgs.hh>
+#include "waypoint.pb.h"
 
 using namespace std;
 
@@ -35,21 +36,31 @@ void GazeboWaypointPlugin::Load(physics::ModelPtr model, sdf::ElementPtr sdf) {
   this->_node->Init(_model->GetWorld()->GetName());
   this->_updateConnection = event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboWaypointPlugin::OnUpdate, this, _1));
   this->_visual_pub = this->_node->Advertise<msgs::Visual>("~/visual", 10);
-  this->_valid = false;
+  this->_waypoint_pub = this->_node
+          ->Advertise<waypoint_msgs::msgs::Waypoint>("~/waypoint", 10);
+  this->_waypoint_sub = this->_node
+          ->Subscribe("~/waypoint", &GazeboWaypointPlugin::OnWaypointUpdate, this);
+
+  /* Waypoint no 0 is active by default */
+  this->SetActive(this->_no == 0);
+  this->SetValid(false);
+  this->UpdateVisual(this->_color);
 }
 
 void GazeboWaypointPlugin::OnUpdate(const common::UpdateInfo& /*_info*/) {
-  ignition::math::Vector3d pose = _model->GetWorld()->GetModel("iris_dronecourse")
+  if(this->_active && !this->_valid) {
+    /* Retrieve position of drone and waypoint */
+    ignition::math::Vector3d pose = _model->GetWorld()
+          ->GetModel("iris_dronecourse")
           ->GetWorldPose().Ign().Pos();
-  ignition::math::Vector3d wp_pose = _model
+    ignition::math::Vector3d wp_pose = _model
           ->GetWorldPose().Ign().Pos();
-  double distance = (pose - wp_pose).Length();
-  if(this->_valid || distance < this->_radius)  {
-    this->UpdateVisual("Gazebo/Green");
-    this->_valid = true;
-  } else {
-    this->UpdateVisual("Gazebo/Yellow");
+    /* Compute distance from center waypoint */
+    double distance = (pose - wp_pose).Length();
+    /* Validate waypoint if drone is inside the waypoint radius */
+    this->SetValid(distance < this->_radius);
   }
+  this->UpdateVisual(this->_color);
 }
 
 void GazeboWaypointPlugin::UpdateVisual(std::string color) {
@@ -69,5 +80,59 @@ void GazeboWaypointPlugin::UpdateVisual(std::string color) {
   visualMsg.set_transparency(0.5);
 
   this->_visual_pub->Publish(visualMsg);
+}
+
+void GazeboWaypointPlugin::SetValid(bool valid) {
+  bool old_valid = this->_valid;
+  this->_valid = valid;
+  if(old_valid != valid) {
+    this->FireValid(valid);
+    if(this->_valid) {
+      this->SetColor(GAZEBO_COLOR_VALIDATED);
+    } else {
+      if(this->_active) {
+        this->SetColor(GAZEBO_COLOR_ACTIVE);
+      } else {
+        this->SetColor(GAZEBO_COLOR_INACTIVE);
+      }
+    }
+  }
+}
+
+void GazeboWaypointPlugin::SetActive(bool active) {
+  bool old_active = this->_active;
+  this->_active = active;
+  if(old_active != active) {
+    if(this->_valid) {
+      this->SetColor(GAZEBO_COLOR_VALIDATED);
+    } else {
+      if(this->_active) {
+        this->SetColor(GAZEBO_COLOR_ACTIVE);
+      } else {
+        this->SetColor(GAZEBO_COLOR_INACTIVE);
+      }
+    }
+  }
+}
+
+void GazeboWaypointPlugin::SetColor(std::string color) {
+  this->_color = color;
+}
+
+void GazeboWaypointPlugin::FireValid(bool valid) {
+  /* Only notify validation. Do not notify de-validation. */
+  if(!valid) {
+    return;
+  }
+  waypoint_msgs::msgs::Waypoint msg;
+  msg.set_waypoint_no(this->_no);
+  msg.set_validated(valid);
+  _waypoint_pub->Publish(msg);
+}
+
+void GazeboWaypointPlugin::OnWaypointUpdate(WaypointPtr &msg) {
+  if(msg->has_waypoint_no() && msg->waypoint_no() + 1 == this->_no) {
+    this->SetActive(true);
+  }
 }
 }
