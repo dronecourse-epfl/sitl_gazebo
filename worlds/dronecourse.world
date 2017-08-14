@@ -21,14 +21,23 @@
     <include>
       <uri>model://waypoint</uri>
       <pose>60 35 8 0 0 0</pose>
+      <plugin name='Waypoint' filename='libgazebo_waypoint_plugin.so'>
+        <no>0</no>
+      </plugin>
     </include>
     <include>
       <uri>model://waypoint</uri>
       <pose>80 0 15 0 0 0</pose>
+      <plugin name='Waypoint' filename='libgazebo_waypoint_plugin.so'>
+        <no>1</no>
+      </plugin>
     </include>
     <include>
       <uri>model://waypoint</uri>
       <pose>55 -35 13 0 0 0</pose>
+      <plugin name='Waypoint' filename='libgazebo_waypoint_plugin.so'>
+        <no>2</no>
+      </plugin>
     </include>
 
 

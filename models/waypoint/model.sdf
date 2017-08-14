@@ -3,22 +3,5 @@
   <model name="waypoint">
     <static>true</static>
     <pose>0 0 0 0 0 0</pose>
-    <link name="sphere">
-      <pose>0 0 0 0 0 0</pose>
-      <visual name='visual'>
-        <transparency>0.5</transparency>
-        <geometry>
-          <sphere>
-            <radius>2</radius>
-          </sphere>
-        </geometry>
-        <material>
-          <script>
-            <name>Gazebo/Yellow</name>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-          </script>
-        </material>
-      </visual>
-    </link>
   </model>
 </sdf>
