@@ -180,8 +180,8 @@
       </axis>
     </joint>
     <plugin name='TruckControl' filename='libgazebo_truck_plugin.so'>
-      <speed_min>4</speed_min>
-      <speed_max>4</speed_max>
+      <speed_min>2</speed_min>
+      <speed_max>2</speed_max>
       <speed_bias_rate_std>0.0001</speed_bias_rate_std>
       <pos_bias_max>0</pos_bias_max>
       <pos_bias_rate_std>0.0005</pos_bias_rate_std>
