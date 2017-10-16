@@ -21,22 +21,19 @@
     <include>
       <uri>model://waypoint</uri>
       <pose>60 35 8 0 0 0</pose>
-      <plugin name='Waypoint' filename='libgazebo_waypoint_plugin.so'>
-        <no>0</no>
+      <plugin name='Waypoint0' filename='libgazebo_waypoint_plugin.so'>
       </plugin>
     </include>
     <include>
       <uri>model://waypoint</uri>
       <pose>80 0 15 0 0 0</pose>
-      <plugin name='Waypoint' filename='libgazebo_waypoint_plugin.so'>
-        <no>1</no>
+      <plugin name='Waypoint1' filename='libgazebo_waypoint_plugin.so'>
       </plugin>
     </include>
     <include>
       <uri>model://waypoint</uri>
       <pose>55 -35 13 0 0 0</pose>
-      <plugin name='Waypoint' filename='libgazebo_waypoint_plugin.so'>
-        <no>2</no>
+      <plugin name='Waypoint2' filename='libgazebo_waypoint_plugin.so'>
       </plugin>
     </include>
 

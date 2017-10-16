@@ -1,3 +1,6 @@
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/lexical_cast.hpp>
 #include <ignition/math/Vector3.hh>
 #include <gazebo/physics/physics.hh>
 #include "gazebo_waypoint_plugin.h"
@@ -16,10 +19,12 @@ GazeboWaypointPlugin::~GazeboWaypointPlugin()
 }
 
 void GazeboWaypointPlugin::Load(physics::ModelPtr model, sdf::ElementPtr sdf) {
-  if(sdf->HasElement("no")) {
-    this->_no = sdf->GetElement("no")->Get<int>();
+  auto _name = sdf->GetAttribute("name")->GetAsString();
+  boost::to_upper(_name);
+  if (boost::starts_with(_name, "WAYPOINT")) {
+    this->_no = atoi(_name.substr(strlen("WAYPOINT")).c_str());
   } else {
-    gzerr << "[waypoint] Please specify a value for parameter \"no\".\n";
+    gzerr << "[waypoint] Waypoint N must be named 'waypointN'\n";
     this->_no = -1;
     return;
   }
