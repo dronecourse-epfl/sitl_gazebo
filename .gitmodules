@@ -3,7 +3,7 @@
 	url = https://github.com/PX4/OpticalFlow.git
 [submodule "platform-proto"]
 	path = platform-proto
-	url = git@github.com:Arth-ur/platform-proto.git
+	url = https://github.com/lis-epfl/platform-proto.git
 [submodule "include/mavlink/v1.0"]
 	path = include/mavlink/v1.0
 	url = https://github.com/lis-epfl/c_library_v1.git
