@@ -4,6 +4,3 @@
 [submodule "platform-proto"]
 	path = platform-proto
 	url = https://github.com/dronecourse-epfl/platform-proto.git
-[submodule "include/mavlink/v1.0"]
-	path = include/mavlink/v1.0
-	url = https://github.com/dronecourse-epfl/c_library_v1.git
