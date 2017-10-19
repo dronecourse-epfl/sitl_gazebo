@@ -29,7 +29,7 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/rendering/rendering.hh>
 
-#include "mavlink/v2.0/common/mavlink.h"
+#include "mavlink/v2.0/dronecourse/mavlink.h"
 
 namespace gazebo
 {

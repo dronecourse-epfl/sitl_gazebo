@@ -49,11 +49,7 @@
 #include <random>
 #include <sdf/sdf.hh>
 
-// TODO use mavlink 2.0
-// #include "mavlink/v2.0/common/mavlink.h"
-#include "mavlink/v1.0/dronecourse/mavlink.h"
-// #include "mavlink/v1.0/common/mavlink.h"
-// #include "mavlink/v1.0/dronecourse/mavlink_msg_target_position_image.h"
+#include "mavlink/v2.0/dronecourse/mavlink.h"
 
 #include "gazebo/math/Vector3.hh"
 #include <sys/socket.h>
