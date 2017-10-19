@@ -183,7 +183,6 @@ set (msgs
   msgs/MotorSpeed.proto
   #msgs/Wind.proto
   msgs/sonarSens.proto
-  msgs/LandingTarget.proto
   msgs/TargetPositionImage.proto
   msgs/GimbalCommand.proto
   platform-proto/platform.proto

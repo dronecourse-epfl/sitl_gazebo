@@ -36,7 +36,6 @@
 #include "opticalFlow.pb.h"
 #include "lidar.pb.h"
 #include "sonarSens.pb.h"
-#include "LandingTarget.pb.h"
 #include "TargetPositionImage.pb.h"
 #include "GimbalCommand.pb.h"
 
@@ -80,11 +79,9 @@ static const std::string kDefaultImuTopic = "/imu";
 static const std::string kDefaultLidarTopic = "/lidar/link/lidar";
 static const std::string kDefaultOpticalFlowTopic = "/camera/link/opticalFlow";
 static const std::string kDefaultSonarTopic = "/sonar_model/link/sonar";
-static const std::string kDefaultLandingTargetTopic = "/LandingTarget";
 static const std::string kDefaultTargetPosTopic = "/TargetPos";
 static const std::string kDefaultPlatformLandingTopic = "~/platform/landing";
 
-static const std::string kDefaultTargetPosTopic = "/TargetPos";
 class GazeboMavlinkInterface : public ModelPlugin {
  public:
   GazeboMavlinkInterface()
@@ -98,7 +95,6 @@ class GazeboMavlinkInterface : public ModelPlugin {
         opticalFlow_sub_topic_(kDefaultOpticalFlowTopic),
         lidar_sub_topic_(kDefaultLidarTopic),
         sonar_sub_topic_(kDefaultSonarTopic),
-        landingTarget_sub_topic_(kDefaultLandingTargetTopic),
         targetPos_sub_topic_(kDefaultTargetPosTopic),
         platform_landing_sub_topic_(kDefaultPlatformLandingTopic),
         model_{},
@@ -174,7 +170,6 @@ class GazeboMavlinkInterface : public ModelPlugin {
   void ImuCallback(ImuPtr& imu_msg);
   void LidarCallback(LidarPtr& lidar_msg);
   void SonarCallback(SonarSensPtr& sonar_msg);
-  void LandingTargetCallback(LandingTargetPtr& pose_message);
   void TargetPosCallback(TargetPosPtr& pose_message);
   void PlatformLandingCallback(PlatformLandingPtr& platform_landing_msg);
   void OpticalFlowCallback(OpticalFlowPtr& opticalFlow_msg);
@@ -203,7 +198,6 @@ class GazeboMavlinkInterface : public ModelPlugin {
   transport::SubscriberPtr imu_sub_;
   transport::SubscriberPtr lidar_sub_;
   transport::SubscriberPtr sonar_sub_;
-  transport::SubscriberPtr landingTarget_sub_;
   transport::SubscriberPtr targetPos_sub_;
   transport::SubscriberPtr opticalFlow_sub_;
   transport::PublisherPtr gps_pub_;
@@ -212,7 +206,6 @@ class GazeboMavlinkInterface : public ModelPlugin {
   std::string opticalFlow_sub_topic_;
   std::string sonar_sub_topic_;
 
-  std::string landingTarget_sub_topic_;
   std::string targetPos_sub_topic_;
   common::Time last_time_;
   common::Time last_gps_time_;
@@ -255,11 +248,5 @@ class GazeboMavlinkInterface : public ModelPlugin {
 
   in_addr_t mavlink_addr_;
   int mavlink_udp_port_;
-
-  // GPS coordinates for gazebo origin
-  double origin_lat_;
-  double origin_lon_;
-  double origin_alt_;
-
   };
 }

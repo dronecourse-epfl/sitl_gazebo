@@ -36,9 +36,9 @@ namespace gazebo {
 // PX4_HOME_LAT, PX4_HOME_LON, and PX4_HOME_ALT
 
 // Zurich Irchel Park
-static const double lat_zurich = 47.397742;  // rad
-static const double lon_zurich = 8.545594;  // rad
-static const double alt_zurich = 488.0; // meters
+static double lat_home = 47.397742 * M_PI / 180;  // rad
+static double lon_home = 8.545594 * M_PI / 180;  // rad
+static double alt_home = 488.0; // meters
 // Seattle downtown (15 deg declination): 47.592182, -122.316031
 // static const double lat_home = 47.592182 * M_PI / 180;  // rad
 // static const double lon_home = -122.316031 * M_PI / 180;  // rad
@@ -93,8 +93,6 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   getSdfParam<std::string>(_sdf, "opticalFlowSubTopic",
       opticalFlow_sub_topic_, opticalFlow_sub_topic_);
   getSdfParam<std::string>(_sdf, "sonarSubTopic", sonar_sub_topic_, sonar_sub_topic_);
-  getSdfParam<std::string>(_sdf, "landingTargetSubTopic",
-      landingTarget_sub_topic_, landingTarget_sub_topic_);
       
   getSdfParam<std::string>(_sdf, "TargetPosSubTopic",
       targetPos_sub_topic_, targetPos_sub_topic_);
@@ -513,18 +511,26 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   chan_state->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
   
   // Get GPS coordinates for gazebo origin from world sdf and convert to rad
-  getSdfParam<double>(_sdf, "gps_origin_lat", origin_lat_, lat_zurich);
-  getSdfParam<double>(_sdf, "gps_origin_lon", origin_lon_, lon_zurich);
-  getSdfParam<double>(_sdf, "gps_origin_alt", origin_alt_, alt_zurich);
-  origin_lat_ *= M_PI / 180.0;
-  origin_lon_ *= M_PI / 180.0;
+  double origin_lat, origin_lon, origin_alt;
+  if (getSdfParam<double>(_sdf, "gps_origin_alt", origin_alt, alt_home)) {
+    alt_home = origin_alt;
+  }
+  if (getSdfParam<double>(_sdf, "gps_origin_lat", origin_lat, lat_home)) {
+    lat_home = origin_lat * M_PI / 180.0;
+  }
+  if (getSdfParam<double>(_sdf, "gps_origin_lon", origin_lon, lon_home)) {
+    lon_home = origin_lon * M_PI / 180.0;
+  }
 
-  mavlink_set_gps_global_origin_t msg;
-  msg.latitude =  origin_lat_ * 180 / M_PI * 1e7;
-  msg.longitude = origin_lon_ * 180 / M_PI * 1e7;
-  msg.altitude = origin_alt_ * 1000;
-  msg.target_system = 1;
-  send_mavlink_message(MAVLINK_MSG_ID_SET_GPS_GLOBAL_ORIGIN, &msg, 200);
+  mavlink_set_gps_global_origin_t orig_msg;
+  orig_msg.latitude =  lat_home * 180 / M_PI * 1e7;
+  orig_msg.longitude = lon_home * 180 / M_PI * 1e7;
+  orig_msg.altitude = alt_home * 1000;
+  orig_msg.target_system = 1;
+  
+  mavlink_message_t msg;
+  mavlink_msg_set_gps_global_origin_encode_chan(1, 200, MAVLINK_COMM_0, &msg, &orig_msg);
+  send_mavlink_message(&msg, 200);
 }
 
 // This gets called by the world update start event.
@@ -575,11 +581,11 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
   double sin_c = sin(c);
   double cos_c = cos(c);
   if (c != 0.0) {
-    lat_rad = asin(cos_c * sin(origin_lat_) + (x_rad * sin_c * cos(origin_lat_)) / c);
-    lon_rad = (origin_lon_ + atan2(y_rad * sin_c, c * cos(origin_lat_) * cos_c - x_rad * sin(origin_lat_) * sin_c));
+    lat_rad = asin(cos_c * sin(lat_home) + (x_rad * sin_c * cos(lat_home)) / c);
+    lon_rad = (lon_home + atan2(y_rad * sin_c, c * cos(lat_home) * cos_c - x_rad * sin(lat_home) * sin_c));
   } else {
-    lat_rad = origin_lat_;
-    lon_rad = origin_lon_;
+    lat_rad = lat_home;
+    lon_rad = lon_home;
   }
 
   if (current_time.Double() - last_gps_time_.Double() > gps_update_interval_ - gps_delay_) {  // 120 ms delay
@@ -588,7 +594,7 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
     hil_gps_msg_.fix_type = 3;
     hil_gps_msg_.lat = lat_rad * 180 / M_PI * 1e7;
     hil_gps_msg_.lon = lon_rad * 180 / M_PI * 1e7;
-    hil_gps_msg_.alt = (pos_W_I.z + origin_alt_) * 1000;
+    hil_gps_msg_.alt = (pos_W_I.z + alt_home) * 1000;
     hil_gps_msg_.eph = 100;
     hil_gps_msg_.epv = 100;
     hil_gps_msg_.vel = velocity_current_W_xy.GetLength() * 100;
@@ -604,7 +610,9 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
   }
 
   if (current_time.Double() - last_gps_time_.Double() > gps_update_interval_) {  // 5Hz
-    send_mavlink_message(MAVLINK_MSG_ID_HIL_GPS, &hil_gps_msg, 200);
+    mavlink_message_t msg;
+    mavlink_msg_hil_gps_encode_chan(1, 200, MAVLINK_COMM_0, &msg, &hil_gps_msg_);
+    send_mavlink_message(&msg, 200);
 
     msgs::Vector3d gps_msg;
     gps_msg.set_x(lat_rad * 180. / M_PI);
@@ -800,7 +808,7 @@ void GazeboMavlinkInterface::ImuCallback(ImuPtr& imu_message) {
 
   hil_state_quat.lat = lat_rad * 180 / M_PI * 1e7;
   hil_state_quat.lon = lon_rad * 180 / M_PI * 1e7;
-  hil_state_quat.alt = (-pos_n.z + origin_alt_) * 1000;
+  hil_state_quat.alt = (-pos_n.z + alt_home) * 1000;
 
   hil_state_quat.vx = vel_n.x * 100;
   hil_state_quat.vy = vel_n.y * 100;
@@ -852,7 +860,9 @@ void GazeboMavlinkInterface::TargetPosCallback(TargetPosPtr& _target_msg)
   target_msg.var_dist = _target_msg->var_dist();
   target_msg.target_num = _target_msg->target_num();
 
-  send_mavlink_message(MAVLINK_MSG_ID_TARGET_POSITION_IMAGE, &target_msg, 200);
+  mavlink_message_t msg;
+  mavlink_msg_target_position_image_encode_chan(1, 200, MAVLINK_COMM_0, &msg, &target_msg);
+  send_mavlink_message(&msg, 200);
 }
 
 void GazeboMavlinkInterface::PlatformLandingCallback(PlatformLandingPtr& _platform_landing_msg)
@@ -864,7 +874,9 @@ void GazeboMavlinkInterface::PlatformLandingCallback(PlatformLandingPtr& _platfo
   platform_landing_msg.vz = _platform_landing_msg->vz();
   platform_landing_msg.contact = _platform_landing_msg->contact();
 
-  send_mavlink_message(MAVLINK_MSG_ID_PLATFORM_LANDING, &platform_landing_msg, 200);
+  mavlink_message_t msg;
+  mavlink_msg_platform_landing_encode_chan(1, 200, MAVLINK_COMM_0, &msg, &platform_landing_msg);
+  send_mavlink_message(&msg, 200);
 }
 
 void GazeboMavlinkInterface::OpticalFlowCallback(OpticalFlowPtr& opticalFlow_message) {
