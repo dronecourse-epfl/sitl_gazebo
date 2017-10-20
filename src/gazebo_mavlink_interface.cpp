@@ -511,26 +511,26 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   chan_state->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
   
   // Get GPS coordinates for gazebo origin from world sdf and convert to rad
-  double origin_lat, origin_lon, origin_alt;
-  if (getSdfParam<double>(_sdf, "gps_origin_alt", origin_alt, alt_home)) {
-    alt_home = origin_alt;
-  }
-  if (getSdfParam<double>(_sdf, "gps_origin_lat", origin_lat, lat_home)) {
-    lat_home = origin_lat * M_PI / 180.0;
-  }
-  if (getSdfParam<double>(_sdf, "gps_origin_lon", origin_lon, lon_home)) {
-    lon_home = origin_lon * M_PI / 180.0;
-  }
+  // double origin_lat, origin_lon, origin_alt;
+  // if (getSdfParam<double>(_sdf, "gps_origin_alt", origin_alt, alt_home)) {
+  //   alt_home = origin_alt;
+  // }
+  // if (getSdfParam<double>(_sdf, "gps_origin_lat", origin_lat, lat_home)) {
+  //   lat_home = origin_lat * M_PI / 180.0;
+  // }
+  // if (getSdfParam<double>(_sdf, "gps_origin_lon", origin_lon, lon_home)) {
+  //   lon_home = origin_lon * M_PI / 180.0;
+  // }
 
-  mavlink_set_gps_global_origin_t orig_msg;
-  orig_msg.latitude =  lat_home * 180 / M_PI * 1e7;
-  orig_msg.longitude = lon_home * 180 / M_PI * 1e7;
-  orig_msg.altitude = alt_home * 1000;
-  orig_msg.target_system = 1;
+  // mavlink_set_gps_global_origin_t orig_msg;
+  // orig_msg.latitude =  lat_home * 180 / M_PI * 1e7;
+  // orig_msg.longitude = lon_home * 180 / M_PI * 1e7;
+  // orig_msg.altitude = alt_home * 1000;
+  // orig_msg.target_system = 1;
   
-  mavlink_message_t msg;
-  mavlink_msg_set_gps_global_origin_encode_chan(1, 200, MAVLINK_COMM_0, &msg, &orig_msg);
-  send_mavlink_message(&msg, 200);
+  // mavlink_message_t msg;
+  // mavlink_msg_set_gps_global_origin_encode_chan(1, 200, MAVLINK_COMM_0, &msg, &orig_msg);
+  // send_mavlink_message(&msg, 200);
 }
 
 // This gets called by the world update start event.
