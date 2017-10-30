@@ -1,16 +1,16 @@
 <sdf version='1.6'>
   <model name='iris_dronecourse'>
-
+  
     <include>
       <uri>model://iris</uri>
-
     </include>
 
-	<include>
+    <include>
       <uri>model://sonar</uri>
     </include>
+    
     <joint name="sonar_joint" type="revolute">
-	  <parent>iris::base_link</parent>
+      <parent>iris::base_link</parent>
       <child>sonar_model::link</child>
       <pose frame=''>0 0 0 0 0 0</pose>
       <axis>
@@ -36,7 +36,6 @@
         </inertia>
       </inertial>
       <sensor name="camera" type="camera">
-        <!-- To Change pose, change pose of the link, not of the sensor-->
         <pose frame=''> 0 0 0 0 0 0 </pose>
         <always_on>true</always_on>
         <update_rate>2</update_rate>
@@ -54,25 +53,48 @@
         </camera>
       </sensor>
     </link>
-    <joint name='gimbal_joint' type="revolute2">
+
+    <joint name='gimbal_joint_1' type="revolute">
       <parent>iris::base_link</parent>
+      <child>gimbal_inter</child>
+      <pose frame=''>0 0 0 0 0 0</pose>
+      <axis>
+        <xyz>0 0 1</xyz>
+      </axis>
+    </joint>
+    
+    <link name='gimbal_inter'>
+      <pose frame=''> 0 0 0 0 0 0.0 </pose>
+      <inertial>
+        <mass>1e-9</mass>
+        <inertia>
+          <ixx>1e-9</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1e-9</iyy>
+          <iyz>0</iyz>
+          <izz>1e-9</izz>
+        </inertia>
+      </inertial>
+    </link>
+
+    <joint name='gimbal_joint_2' type="revolute">
+      <parent>gimbal_inter</parent>
       <child>target_cam</child>
       <pose frame=''>0 0 0 0 0 0</pose>
-      <parent>chassis</parent>
       <axis>
         <xyz>0 1 0</xyz>
       </axis>
-      <axis2>
-        <xyz>1 0 0</xyz>
-      </axis2>
     </joint>
+
     <plugin name='TargetCameraPlugin' filename='libgazebo_target_camera_plugin.so'>
       <target_link>truck::target_platform</target_link>
-      <gimbal_joint>gimbal_joint</gimbal_joint>
+      <gimbal_joint>gimbal_joint_2</gimbal_joint>
       <noise_xy>4</noise_xy>
       <noise_z>0.1</noise_z>
       <mavlink_addr>INADDR_ANY</mavlink_addr>
       <mavlink_udp_port>14580</mavlink_udp_port>
-    </plugin>
+    </plugin> 
+
   </model>
 </sdf>
