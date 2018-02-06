@@ -68,6 +68,7 @@
     </joint>
     <plugin name='TargetCameraPlugin' filename='libgazebo_target_camera_plugin.so'>
       <target_link>truck::target_platform</target_link>
+      <target_link>platform::box</target_link>
       <gimbal_joint>gimbal_joint</gimbal_joint>
       <noise_xy>4</noise_xy>
       <noise_z>0.1</noise_z>
