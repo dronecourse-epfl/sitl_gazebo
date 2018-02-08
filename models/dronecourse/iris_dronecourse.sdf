@@ -60,10 +60,10 @@
       <pose frame=''>0 0 0 0 0 0</pose>
       <parent>chassis</parent>
       <axis>
-        <xyz>0 1 0</xyz>
+        <xyz>1 0 0</xyz>
       </axis>
       <axis2>
-        <xyz>1 0 0</xyz>
+        <xyz>0 1 0</xyz>
       </axis2>
     </joint>
     <plugin name='TargetCameraPlugin' filename='libgazebo_target_camera_plugin.so'>
